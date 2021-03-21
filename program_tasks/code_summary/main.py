@@ -158,7 +158,7 @@ def main(args_set):
     test_path1 = args_set.test_data1
     test_path2 = args_set.test_data2
     test_path3 = args_set.test_data3
-    test_path4 = args_set.test_data4
+    # test_path4 = args_set.test_data4
     embed_dim = args_set.embed_dim
     embed_type = args_set.embed_type
     vec_path = args_set.embed_path
@@ -222,11 +222,11 @@ def main(args_set):
     ed_time = datetime.datetime.now()
     print('test dataset3 size is ', len(test_dataset3), 'cost time', ed_time - st_time)
 
-    st_time = datetime.datetime.now()
-    test_dataset4 = CodeLoader(test_path4, None, token2index, tk2num)
-    # test_loader4 = DataLoader(test_dataset4, batch_size=train_batch, collate_fn=my_collate)
-    ed_time = datetime.datetime.now()
-    print('test dataset4 size is ', len(test_dataset4), 'cost time', ed_time - st_time)
+    # st_time = datetime.datetime.now()
+    # test_dataset4 = CodeLoader(test_path4, None, token2index, tk2num)
+    # # test_loader4 = DataLoader(test_dataset4, batch_size=train_batch, collate_fn=my_collate)
+    # ed_time = datetime.datetime.now()
+    # print('test dataset4 size is ', len(test_dataset4), 'cost time', ed_time - st_time)
 
     # training
     print('begin training experiment {} ...'.format(experiment_name))
@@ -236,6 +236,7 @@ def main(args_set):
     total_st_time = datetime.datetime.now()
 
     for epoch in range(start_epoch, epochs+1):
+        # print('max size: {}'.format(max_size))
         idx = np.random.randint(0, max_size, max_size)
         train_sampler = sampler.SubsetRandomSampler(idx)
         train_loader = DataLoader(train_dataset, batch_size=train_batch, 
@@ -246,8 +247,8 @@ def main(args_set):
                                   collate_fn=my_collate, sampler=train_sampler)
         test_loader3 = DataLoader(test_dataset3, batch_size=train_batch, 
                                   collate_fn=my_collate, sampler=train_sampler)
-        test_loader4 = DataLoader(test_dataset4, batch_size=train_batch, 
-                                  collate_fn=my_collate, sampler=train_sampler)
+        # test_loader4 = DataLoader(test_dataset4, batch_size=train_batch, 
+        #                           collate_fn=my_collate, sampler=train_sampler)
 
 
         model = train_model(model, epoch, train_loader, device,
@@ -255,7 +256,7 @@ def main(args_set):
         res1 = test_model(test_loader1, model, device, index2func, 'test1')
         res2 = test_model(test_loader2, model, device, index2func, 'test2')
         res3 = test_model(test_loader3, model, device, index2func, 'test3')
-        res4 = test_model(test_loader4, model, device, index2func, 'test4')
+        # res4 = test_model(test_loader4, model, device, index2func, 'test4')
 
         # save model checkpoint
         if res1['test1 acc'] > best_val_acc:
@@ -291,7 +292,7 @@ if __name__ == '__main__':
     parser.add_argument('--test_data1', type=str, default='data/java_pkl_files/test1.pkl')
     parser.add_argument('--test_data2', type=str, default='data/java_pkl_files/test2.pkl')
     parser.add_argument('--test_data3', type=str, default='data/java_pkl_files/test3.pkl')
-    parser.add_argument('--test_data4', type=str, default='data/java_pkl_files/test4.pkl')
+    # parser.add_argument('--test_data4', type=str, default='data/java_pkl_files/test4.pkl')
     parser.add_argument('--tk_path', type=str, default='data/java_pkl_files/tk.pkl')
     parser.add_argument('--embed_type', type=int, default=1, choices=[0, 1, 2])
     parser.add_argument('--experiment_name', type=str, default='code summary')

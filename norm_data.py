@@ -70,14 +70,14 @@ def main():
     norm_data('test1')
     norm_data('test2')
     norm_data('test3')
-    norm_data('test4')
+    # norm_data('test4')
     # norm_data('test')
     # norm_data('val')
 
 
 if __name__ == '__main__':
-    FILENAME = 'java_projects'
-    GEN_FILE = 'java_project_files'
+    FILENAME = 'spring-framework_project'
+    GEN_FILE = 'spring-framework_pkl'
     DIR = os.path.join('data', GEN_FILE)
     DATA_DIR = os.path.join('data', FILENAME)
     main()

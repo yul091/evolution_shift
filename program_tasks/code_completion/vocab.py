@@ -26,6 +26,8 @@ class VocabBuilder(object):
             dict: {word_n :count_n, ...}
         """
         df = pd.read_csv(path_file, delimiter='\t')
+        # print(df['body'])
+        # print(df['body'][0].split())
         # tokenize
         df['body'] = df['body'].apply(tokenizer)
         # count

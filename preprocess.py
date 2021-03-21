@@ -99,8 +99,8 @@ if __name__ == '__main__':
                         help="path to test data2 file", required=False)
     parser.add_argument("-ted3", "--test_data3", dest="test_data3_path",
                         help="path to test data3 file", required=False)
-    parser.add_argument("-ted4", "--test_data4", dest="test_data4_path",
-                        help="path to test data4 file", required=False)
+    # parser.add_argument("-ted4", "--test_data4", dest="test_data4_path",
+    #                     help="path to test data4 file", required=False)
     parser.add_argument("-mc", "--max_contexts", dest="max_contexts", default=200,
                         help="number of max contexts to keep", required=False)
     parser.add_argument("-wvs", "--word_vocab_size", dest="word_vocab_size", default=1301136,
@@ -124,7 +124,7 @@ if __name__ == '__main__':
     test_data1_path = args.test_data1_path
     test_data2_path = args.test_data2_path
     test_data3_path = args.test_data3_path
-    test_data4_path = args.test_data4_path
+    # test_data4_path = args.test_data4_path
     word_histogram_path = args.word_histogram
     path_histogram_path = args.path_histogram
 
@@ -145,14 +145,14 @@ if __name__ == '__main__':
             test_data1_path, 
             test_data2_path, 
             test_data3_path, 
-            test_data4_path, 
+            # test_data4_path, 
             train_data_path
         ], 
         [
             'test1',
             'test2', 
             'test3', 
-            'test4', 
+            # 'test4', 
             'train'
         ]
     ):
