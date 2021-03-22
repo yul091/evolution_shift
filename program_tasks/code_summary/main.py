@@ -115,7 +115,6 @@ def train_model(model, cur_epoch, train_loader, device,
         'train f1':f1,
     }
     print(res)
-    return model
 
 
 def test_model(val_loader, model, device, index2func, val_name):
@@ -237,22 +236,39 @@ def main(args_set):
 
     for epoch in range(start_epoch, epochs+1):
         # print('max size: {}'.format(max_size))
-        idx = np.random.randint(0, max_size, max_size)
-        train_sampler = sampler.SubsetRandomSampler(idx)
-        train_loader = DataLoader(train_dataset, batch_size=train_batch, 
-                                  collate_fn=my_collate, sampler=train_sampler)
-        test_loader1 = DataLoader(test_dataset1, batch_size=train_batch, 
-                                  collate_fn=my_collate, sampler=train_sampler)
-        test_loader2 = DataLoader(test_dataset2, batch_size=train_batch, 
-                                  collate_fn=my_collate, sampler=train_sampler)
-        test_loader3 = DataLoader(test_dataset3, batch_size=train_batch, 
-                                  collate_fn=my_collate, sampler=train_sampler)
-        # test_loader4 = DataLoader(test_dataset4, batch_size=train_batch, 
-        #                           collate_fn=my_collate, sampler=train_sampler)
+        if max_size is None:
+            train_loader = DataLoader(train_dataset, batch_size=train_batch, 
+                                      collate_fn=my_collate)
+            test_loader1 = DataLoader(test_dataset1, batch_size=train_batch, 
+                                      collate_fn=my_collate)
+            test_loader2 = DataLoader(test_dataset2, batch_size=train_batch, 
+                                      collate_fn=my_collate)
+            test_loader3 = DataLoader(test_dataset3, batch_size=train_batch, 
+                                      collate_fn=my_collate)
+        else:
+            mom = min(
+                max_size, 
+                len(train_dataset), 
+                len(test_dataset1), 
+                len(test_dataset2), 
+                len(test_dataset3)
+            )
+            idx = np.random.randint(0, mom, mom)
+            train_sampler = sampler.SubsetRandomSampler(idx)
+            train_loader = DataLoader(train_dataset, batch_size=train_batch, 
+                                      collate_fn=my_collate, sampler=train_sampler)
+            test_loader1 = DataLoader(test_dataset1, batch_size=train_batch, 
+                                      collate_fn=my_collate, sampler=train_sampler)
+            test_loader2 = DataLoader(test_dataset2, batch_size=train_batch, 
+                                      collate_fn=my_collate, sampler=train_sampler)
+            test_loader3 = DataLoader(test_dataset3, batch_size=train_batch, 
+                                      collate_fn=my_collate, sampler=train_sampler)
+            # test_loader4 = DataLoader(test_dataset4, batch_size=train_batch, 
+            #                           collate_fn=my_collate, sampler=train_sampler)
 
 
-        model = train_model(model, epoch, train_loader, device,
-                            criterian, optimizer, index2func)
+        train_model(model, epoch, train_loader, device,
+                    criterian, optimizer, index2func)
         res1 = test_model(test_loader1, model, device, index2func, 'test1')
         res2 = test_model(test_loader2, model, device, index2func, 'test2')
         res3 = test_model(test_loader3, model, device, index2func, 'test3')
