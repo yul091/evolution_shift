@@ -67,17 +67,15 @@ def main():
         os.mkdir(DIR)
     build_dict(dataset)
     norm_data('train')
+    norm_data('val')
     norm_data('test1')
     norm_data('test2')
     norm_data('test3')
-    # norm_data('test4')
-    # norm_data('test')
-    # norm_data('val')
 
 
 if __name__ == '__main__':
-    FILENAME = 'spring-framework_project'
-    GEN_FILE = 'spring-framework_pkl'
+    FILENAME = 'wildfly_project'
+    GEN_FILE = 'wildfly_pkl'
     DIR = os.path.join('data', GEN_FILE)
     DATA_DIR = os.path.join('data', FILENAME)
     main()

@@ -154,10 +154,10 @@ def main(args_set):
     # parameters setting
     tk_path = args_set.tk_path
     train_path = args_set.train_data
+    val_path = args_set.val_data
     test_path1 = args_set.test_data1
     test_path2 = args_set.test_data2
     test_path3 = args_set.test_data3
-    # test_path4 = args_set.test_data4
     embed_dim = args_set.embed_dim
     embed_type = args_set.embed_type
     vec_path = args_set.embed_path
@@ -204,6 +204,12 @@ def main(args_set):
     print('train dataset size is ', len(train_dataset), 'cost time', ed_time - st_time)
 
     st_time = datetime.datetime.now()
+    val_dataset = CodeLoader(val_path, None, token2index, tk2num)
+    # train_loader = DataLoader(train_dataset, batch_size=train_batch, collate_fn=my_collate)
+    ed_time = datetime.datetime.now()
+    print('val dataset size is ', len(val_dataset), 'cost time', ed_time - st_time)
+
+    st_time = datetime.datetime.now()
     test_dataset1 = CodeLoader(test_path1, None, token2index, tk2num)
     # test_loader1 = DataLoader(test_dataset1, batch_size=train_batch, collate_fn=my_collate)
     ed_time = datetime.datetime.now()
@@ -239,6 +245,8 @@ def main(args_set):
         if max_size is None:
             train_loader = DataLoader(train_dataset, batch_size=train_batch, 
                                       collate_fn=my_collate)
+            val_loader = DataLoader(val_dataset, batch_size=train_batch, 
+                                      collate_fn=my_collate)
             test_loader1 = DataLoader(test_dataset1, batch_size=train_batch, 
                                       collate_fn=my_collate)
             test_loader2 = DataLoader(test_dataset2, batch_size=train_batch, 
@@ -249,6 +257,7 @@ def main(args_set):
             mom = min(
                 max_size, 
                 len(train_dataset), 
+                len(val_dataset),
                 len(test_dataset1), 
                 len(test_dataset2), 
                 len(test_dataset3)
@@ -257,28 +266,28 @@ def main(args_set):
             train_sampler = sampler.SubsetRandomSampler(idx)
             train_loader = DataLoader(train_dataset, batch_size=train_batch, 
                                       collate_fn=my_collate, sampler=train_sampler)
+            val_loader = DataLoader(val_dataset, batch_size=train_batch, 
+                                      collate_fn=my_collate, sampler=train_sampler)
             test_loader1 = DataLoader(test_dataset1, batch_size=train_batch, 
                                       collate_fn=my_collate, sampler=train_sampler)
             test_loader2 = DataLoader(test_dataset2, batch_size=train_batch, 
                                       collate_fn=my_collate, sampler=train_sampler)
             test_loader3 = DataLoader(test_dataset3, batch_size=train_batch, 
                                       collate_fn=my_collate, sampler=train_sampler)
-            # test_loader4 = DataLoader(test_dataset4, batch_size=train_batch, 
-            #                           collate_fn=my_collate, sampler=train_sampler)
 
 
         train_model(model, epoch, train_loader, device,
                     criterian, optimizer, index2func)
-        res1 = test_model(test_loader1, model, device, index2func, 'test1')
-        res2 = test_model(test_loader2, model, device, index2func, 'test2')
-        res3 = test_model(test_loader3, model, device, index2func, 'test3')
-        # res4 = test_model(test_loader4, model, device, index2func, 'test4')
-        merge_res = {**res1, **res2, **res3} # merge all the test results
+        res1 = test_model(val_loader, model, device, index2func, 'val')
+        res2 = test_model(test_loader1, model, device, index2func, 'test1')
+        res3 = test_model(test_loader2, model, device, index2func, 'test2')
+        res4 = test_model(test_loader3, model, device, index2func, 'test3')
+        merge_res = {**res1, **res2, **res3, **res4} # merge all the test results
 
         # save model checkpoint
-        if res1['test1 acc'] > best_val_acc:
+        if res2['test1 acc'] > best_val_acc:
             Checkpoint(model, optimizer, epoch, merge_res).save(out_dir)
-            best_val_acc = res1['test1 acc']
+            best_val_acc = res2['test1 acc']
 
     total_ed_time = datetime.datetime.now()
     print('training experiment {} finished! Total cost time: {}'.format(
@@ -305,10 +314,10 @@ if __name__ == '__main__':
     parser.add_argument('--embed_dim', default=100, type=int, metavar='N', help='embedding size')
     parser.add_argument('--embed_path', type=str, default='vec/100_2/Doc2VecEmbedding0.vec')
     parser.add_argument('--train_data', type=str, default='data/java_pkl_files/train.pkl')
+    parser.add_argument('--val_data', type=str, default='data/java_pkl_files/val.pkl')
     parser.add_argument('--test_data1', type=str, default='data/java_pkl_files/test1.pkl')
     parser.add_argument('--test_data2', type=str, default='data/java_pkl_files/test2.pkl')
     parser.add_argument('--test_data3', type=str, default='data/java_pkl_files/test3.pkl')
-    # parser.add_argument('--test_data4', type=str, default='data/java_pkl_files/test4.pkl')
     parser.add_argument('--tk_path', type=str, default='data/java_pkl_files/tk.pkl')
     parser.add_argument('--embed_type', type=int, default=1, choices=[0, 1, 2])
     parser.add_argument('--experiment_name', type=str, default='code summary')

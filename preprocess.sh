@@ -18,13 +18,14 @@
 #   recommended to use a multi-core machine for the preprocessing 
 #   step and set this value to the number of cores.
 # PYTHON - python3 interpreter alias.
-DIR=data/elasticsearch
+DIR=data/spring-framework
 TRAIN_DIR=$DIR/train
+VAL_DIR=$DIR/val
 TEST_DIR1=$DIR/test1
 TEST_DIR2=$DIR/test2
 TEST_DIR3=$DIR/test3
 
-DATASET_NAME='elasticsearch_project'
+DATASET_NAME='spring-framework_project'
 MAX_CONTEXTS=200
 WORD_VOCAB_SIZE=1301136
 PATH_VOCAB_SIZE=911417
@@ -34,10 +35,10 @@ PYTHON=python3
 ###########################################################
 
 TRAIN_DATA_FILE=${DATASET_NAME}.train.raw.txt
+VAL_DATA_FILE=${DATASET_NAME}.val.raw.txt
 TEST_DATA_FILE1=${DATASET_NAME}.test1.raw.txt
 TEST_DATA_FILE2=${DATASET_NAME}.test2.raw.txt
 TEST_DATA_FILE3=${DATASET_NAME}.test3.raw.txt
-# TEST_DATA_FILE4=${DATASET_NAME}.test4.raw.txt
 EXTRACTOR_JAR=JavaExtractor/JPredict/target/JavaExtractor-0.0.1-SNAPSHOT.jar
 
 mkdir -p data
@@ -52,9 +53,9 @@ echo "Finished extracting paths from test set2"
 echo "Extracting paths from test set3 ..."
 ${PYTHON} JavaExtractor/extract.py --dir ${TEST_DIR3} --max_path_length 8 --max_path_width 2 --num_threads ${NUM_THREADS} --jar ${EXTRACTOR_JAR} > ${TEST_DATA_FILE3}
 echo "Finished extracting paths from test set3"
-# echo "Extracting paths from test set4 ..."
-# ${PYTHON} JavaExtractor/extract.py --dir ${TEST_DIR4} --max_path_length 8 --max_path_width 2 --num_threads ${NUM_THREADS} --jar ${EXTRACTOR_JAR} > ${TEST_DATA_FILE4}
-# echo "Finished extracting paths from test set4"
+echo "Extracting paths from validation set ..."
+${PYTHON} JavaExtractor/extract.py --dir ${VAL_DIR} --max_path_length 8 --max_path_width 2 --num_threads ${NUM_THREADS} --jar ${EXTRACTOR_JAR} > ${VAL_DATA_FILE}
+echo "Finished extracting paths from validation set"
 echo "Extracting paths from training set..."
 ${PYTHON} JavaExtractor/extract.py --dir ${TRAIN_DIR} --max_path_length 8 --max_path_width 2 --num_threads ${NUM_THREADS} --jar ${EXTRACTOR_JAR} | shuf > ${TRAIN_DATA_FILE}
 echo "Finished extracting paths from training set"
@@ -68,7 +69,7 @@ cat ${TRAIN_DATA_FILE} | cut -d' ' -f1 | awk '{n[$0]++} END {for (i in n) print 
 cat ${TRAIN_DATA_FILE} | cut -d' ' -f2- | tr ' ' '\n' | cut -d',' -f1,3 | tr ',' '\n' | awk '{n[$0]++} END {for (i in n) print i,n[i]}' > ${ORIGIN_HISTOGRAM_FILE}
 cat ${TRAIN_DATA_FILE} | cut -d' ' -f2- | tr ' ' '\n' | cut -d',' -f2 | awk '{n[$0]++} END {for (i in n) print i,n[i]}' > ${PATH_HISTOGRAM_FILE}
 
-${PYTHON} preprocess.py --train_data ${TRAIN_DATA_FILE} \
+${PYTHON} preprocess.py --train_data ${TRAIN_DATA_FILE} --val_data ${VAL_DATA_FILE} \
   --test_data1 ${TEST_DATA_FILE1} \
   --test_data2 ${TEST_DATA_FILE2} \
   --test_data3 ${TEST_DATA_FILE3} \
@@ -78,5 +79,5 @@ ${PYTHON} preprocess.py --train_data ${TRAIN_DATA_FILE} \
     
 # If all went well, the raw data files can be deleted, because preprocess.py creates new files 
 # with truncated and padded number of paths for each example.
-rm ${TRAIN_DATA_FILE} ${TEST_DATA_FILE1} ${TEST_DATA_FILE2} ${TEST_DATA_FILE3} \
+rm ${TRAIN_DATA_FILE} ${VAL_DATA_FILE} ${TEST_DATA_FILE1} ${TEST_DATA_FILE2} ${TEST_DATA_FILE3} \
   ${TARGET_HISTOGRAM_FILE} ${ORIGIN_HISTOGRAM_FILE} ${PATH_HISTOGRAM_FILE}

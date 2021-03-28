@@ -1,7 +1,7 @@
 ############### find all zip file that needs extrating
 
 data_dir=/glusterfs/data/yxl190090/distribution_shift/data
-target_folder=$data_dir/elasticsearch
+target_folder=$data_dir/wildfly
 cd $target_folder
 
 zipfile=$(find -mindepth 0 -maxdepth 1 -name '*.zip') # find all zipfiles
@@ -12,7 +12,7 @@ do
     # first extract all files in the zip file
     file=${file#"./"} # get rid of the "./" prefix
     echo "extracting file $file ..." 
-    unzip -q $file # -q to suppress the printing of extracted files
+    # unzip -q $file # -q to suppress the printing of extracted files
 
     # then copy the .java files to des folder
     file=${file%".zip"} # get rid of the ".zip" suffix

@@ -94,13 +94,13 @@ if __name__ == '__main__':
     parser.add_argument("-trd", "--train_data", dest="train_data_path",
                         help="path to training data file", required=True)
     parser.add_argument("-ted1", "--test_data1", dest="test_data1_path",
-                        help="path to test data1 file", required=False)
+                        help="path to test data1 file", required=True)
     parser.add_argument("-ted2", "--test_data2", dest="test_data2_path",
-                        help="path to test data2 file", required=False)
+                        help="path to test data2 file", required=True)
     parser.add_argument("-ted3", "--test_data3", dest="test_data3_path",
-                        help="path to test data3 file", required=False)
-    # parser.add_argument("-ted4", "--test_data4", dest="test_data4_path",
-    #                     help="path to test data4 file", required=False)
+                        help="path to test data3 file", required=True)
+    parser.add_argument("-vd", "--val_data", dest="val_data_path",
+                        help="path to validation data file", required=True)
     parser.add_argument("-mc", "--max_contexts", dest="max_contexts", default=200,
                         help="number of max contexts to keep", required=False)
     parser.add_argument("-wvs", "--word_vocab_size", dest="word_vocab_size", default=1301136,
@@ -124,7 +124,7 @@ if __name__ == '__main__':
     test_data1_path = args.test_data1_path
     test_data2_path = args.test_data2_path
     test_data3_path = args.test_data3_path
-    # test_data4_path = args.test_data4_path
+    val_data_path = args.val_data_path
     word_histogram_path = args.word_histogram
     path_histogram_path = args.path_histogram
 
@@ -145,14 +145,14 @@ if __name__ == '__main__':
             test_data1_path, 
             test_data2_path, 
             test_data3_path, 
-            # test_data4_path, 
+            val_data_path, 
             train_data_path
         ], 
         [
             'test1',
             'test2', 
             'test3', 
-            # 'test4', 
+            'val', 
             'train'
         ]
     ):

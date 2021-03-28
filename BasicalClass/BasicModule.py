@@ -14,7 +14,7 @@ class BasicModule:
         self.shift1_path = os.path.join(data_dir, 'test1.pkl')
         self.shift2_path = os.path.join(data_dir, 'test2.pkl')
         self.shift3_path = os.path.join(data_dir, 'test3.pkl')
-        # self.val_path = os.path.join(data_dir, 'val.pkl')
+        self.val_path = os.path.join(data_dir, 'val.pkl')
         self.vec_path = 'java_dataset/embedding_vec/100_2/Doc2VecEmbedding0.vec'
         self.embed_dim = 100
         self.res_dir = res_dir
@@ -86,24 +86,24 @@ class BasicModule:
 
         return hidden_res, sub_num, torch.cat(label_res)
 
-    def get_loader(self, train_db, val_db, test_db ):
-        train_loader = DataLoader(
-            train_db, batch_size=self.train_batch_size,
-            shuffle=False, collate_fn=None)
-        val_loader = DataLoader(
-            val_db, batch_size=self.test_batch_size,
-            shuffle=False, collate_fn=None)
-        test_loader = DataLoader(
-            test_db, batch_size=self.test_batch_size,
-            shuffle=False, collate_fn=None)
-        return train_loader, val_loader, test_loader
+    # def get_loader(self, train_db, val_db, test_db ):
+    #     train_loader = DataLoader(
+    #         train_db, batch_size=self.train_batch_size,
+    #         shuffle=False, collate_fn=None)
+    #     val_loader = DataLoader(
+    #         val_db, batch_size=self.test_batch_size,
+    #         shuffle=False, collate_fn=None)
+    #     test_loader = DataLoader(
+    #         test_db, batch_size=self.test_batch_size,
+    #         shuffle=False, collate_fn=None)
+    #     return train_loader, val_loader, test_loader
 
     def get_information(self):
         self.train_pred_pos, self.train_pred_y, self.train_y = \
             common_predict(self.train_loader, self.model, self.device)
 
-        # self.val_pred_pos, self.val_pred_y, self.val_y = \
-        #     common_predict(self.val_loader, self.model, self.device)
+        self.val_pred_pos, self.val_pred_y, self.val_y = \
+            common_predict(self.val_loader, self.model, self.device)
 
         self.shift1_pred_pos, self.shift1_pred_y, self.shift1_y = \
             common_predict(self.shift1_loader, self.model, self.device)
@@ -115,22 +115,23 @@ class BasicModule:
             common_predict(self.shift3_loader, self.model, self.device)
 
         print(
-            'train class num: {}, shift1 class num: {}, shift2 class num: {}, shift3 class num: {}'.format(
-                self.train_pred_pos.size(1), self.shift1_pred_pos.size(1), 
-                self.shift2_pred_pos.size(1), self.shift3_pred_pos.size(1)
+            'train class num: {}, val class num: {}, shift1 class num: {}, shift2 class num: {}, shift3 class num: {}'.format(
+                self.train_pred_pos.size(1), self.val_pred_pos.size(1), 
+                self.shift1_pred_pos.size(1), self.shift2_pred_pos.size(1), 
+                self.shift3_pred_pos.size(1)
             )
         )
         self.class_num = self.train_pred_pos.size(1) # setting the class_num
 
     def save_truth(self):
         self.train_truth = self.train_pred_y.eq(self.train_y)
-        # self.val_truth = self.val_pred_y.eq(self.val_y)
+        self.val_truth = self.val_pred_y.eq(self.val_y)
         self.shift1_truth = self.shift1_pred_y.eq(self.shift1_y)
         self.shift2_truth = self.shift2_pred_y.eq(self.shift2_y)
         self.shift3_truth = self.shift3_pred_y.eq(self.shift3_y)
         truth = [
             common_ten2numpy(self.train_truth), # torch to numpy cpu
-            # common_ten2numpy(self.val_truth),
+            common_ten2numpy(self.val_truth),
             common_ten2numpy(self.shift1_truth),
             common_ten2numpy(self.shift2_truth),
             common_ten2numpy(self.shift3_truth),

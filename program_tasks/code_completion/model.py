@@ -13,9 +13,18 @@ class Word2vecPredict(nn.Module):
             self.encoder = nn.Embedding(vocab_size, 100, padding_idx=0)
 
         self.linear = nn.Linear(100, len(d_word_index))
+        self.sub_num = [1]
 
     def forward(self, x):
         vec = self.encoder(x)
         vec = torch.mean(vec, dim=1)
         pred = self.linear(vec)
         return pred
+
+    def get_hidden(self, x):
+        res = []
+        vec = self.encoder(x)
+        vec = torch.mean(vec, dim=1)
+        res.append(vec.detach().cpu())
+        # pred = self.linear(vec)
+        return res

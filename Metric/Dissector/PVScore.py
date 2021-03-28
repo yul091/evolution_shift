@@ -5,6 +5,7 @@ import torch.optim as optim
 from torch.utils.data import Dataset, DataLoader
 
 from typing import *
+from tqdm import tqdm
 from BasicalClass import BasicModule
 from BasicalClass import common_ten2numpy
 from BasicalClass import common_get_maxpos, common_predict, common_cal_accuracy
@@ -33,23 +34,29 @@ def build_loader(x, y, batch_size):
 class PVScore(BasicUncertainty):
     def __init__(self, instance: BasicModule, device):
         super(PVScore, self).__init__(instance, device)
-        if len(os.listdir('../sub_model/' + self.instance.__class__.__name__)) == 0:
-            self.train_sub_model(lr=1e-2, epoch=10)
+        self.train_sub_model(lr=1e-2, epoch=10)
+        # if len(os.listdir(os.path.join(instance.save_dir, instance.__class__.__name__))) == 0:
+        #     self.train_sub_model(lr=1e-2, epoch=10)
 
     def cal_svc(self, pred_vec, original_pred):
         pred_vec = self.softmax(pred_vec)
+        print('pred_vec size: ', pred_vec.size())
         pred_order = torch.argsort(pred_vec, dim=1)
         sub_pred = pred_order[:, -1]
         sec_pos = pred_order[:, -2]
-        second_vec = pred_vec[torch.arange(len(pred_vec)), sec_pos].to(self.device)
+        # second_vec = pred_vec[torch.arange(len(pred_vec)), sec_pos].to(self.device)
+        second_vec = pred_vec[torch.arange(len(pred_vec)), sec_pos]
         cor_index = torch.where(sub_pred == original_pred)
         err_index = torch.where(sub_pred != original_pred)
 
-        SVscore = torch.zeros([len(pred_vec)]).to(self.device)
-        lsh = torch.zeros([len(pred_vec)]).to(self.device)
+        # SVscore = torch.zeros([len(pred_vec)]).to(self.device)
+        SVscore = torch.zeros([len(pred_vec)])
+        # lsh = torch.zeros([len(pred_vec)]).to(self.device)
+        lsh = torch.zeros([len(pred_vec)])
 
         lsh[cor_index] = second_vec[cor_index]
-        tmp = pred_vec[torch.arange(len(pred_vec)), original_pred][cor_index].to(self.device)
+        # tmp = pred_vec[torch.arange(len(pred_vec)), original_pred][cor_index].to(self.device)
+        tmp = pred_vec[torch.arange(len(pred_vec)), original_pred][cor_index]
         SVscore[cor_index] = tmp / (tmp + lsh[cor_index])
 
         lsh[err_index] = pred_vec[torch.arange(len(pred_order)), sub_pred][err_index]
@@ -76,6 +83,7 @@ class PVScore(BasicUncertainty):
         return weight_svc
 
     def train_sub_model(self, lr, epoch):
+        print("train sub models ...")
         sub_res_list, sub_num, label = self.instance.get_hiddenstate(self.train_loader, self.device)
         for i, sub_res in enumerate(sub_res_list):
             linear = nn.Linear(len(sub_res[1]), self.class_num).to(self.device)
@@ -83,17 +91,23 @@ class PVScore(BasicUncertainty):
             optimizer = optim.SGD(linear.parameters(), lr=lr)
             data_loader = build_loader(sub_res, label, self.train_batch_size)
             linear.train()
-            for it in range(epoch):
+            for _ in tqdm(range(epoch)):
                 for x, y in data_loader:
                     x = x.to(self.device)
                     y = y.to(self.device).view([-1])
                     linear.zero_grad()
                     pred = linear(x)
-                    loss = my_loss(pred.to(self.device), y.to(self.device))
+                    loss = my_loss(pred, y)
                     loss.backward()
                     optimizer.step()
+                    # detach
+                    x = x.detach().cpu()
+                    y = y.detach().cpu()
+                    pred = pred.detach().cpu()
+
             linear.eval()
-            _, pred_y, _ = common_predict(data_loader, linear, device=self.device)
+            print('linear model: ', linear)
+            _, pred_y, _ = common_predict(data_loader, linear, device=self.device, train_sub=True)
             acc = common_cal_accuracy(pred_y, self.train_y)
             print('feature number for sub-model is', len(sub_res[0]), 'finish training the sub-model', sub_num[i],
                   'for ', self.instance.__class__.__name__, 'accuracy is', acc)
@@ -103,9 +117,9 @@ class PVScore(BasicUncertainty):
             print('save sub model in ', save_path)
 
     def get_submodel_path(self, index):
-        if not os.path.isdir('../sub_model'):
-            os.mkdir('../sub_model')
-        dir_name = '../sub_model/' + self.instance.__class__.__name__ + '/'
+        if not os.path.isdir(self.save_dir):
+            os.mkdir(self.save_dir)
+        dir_name = self.save_dir + '/' + self.instance.__class__.__name__ + '/'
         if not os.path.isdir(dir_name):
             os.mkdir(dir_name)
         if not self.instance.load_poor:
@@ -123,30 +137,32 @@ class PVScore(BasicUncertainty):
             linear_model.eval()
             hidden = sub_res_list[i]
             data_loader = build_loader(hidden, y, self.test_batch_size)
-            pred_pos, pred_y, _ = common_predict(data_loader, linear_model, self.device)
+            pred_pos, pred_y, _ = common_predict(data_loader, linear_model, self.device, train_sub=True)
             res.append(pred_pos)
-            print('test accuracy for', self.__class__.__name__, 'submodel ', sub_num[i], 'is', torch.sum(y.eq(pred_y), dtype=torch.float) / len(y))
+            print('test accuracy for', self.__class__.__name__, 'submodel ', sub_num[i], 'is', torch.sum(y.eq(pred_y), dtype=torch.float).item() / len(y))
         return res, sub_num
 
     def get_svscore(self, data_loader, pred_y):
         sub_pred_pos_list, sub_num = self.get_submodel_prediction(data_loader)
         svscore_list = []
         for sub_pred_pos in sub_pred_pos_list:
-            svscore = self.cal_svc(sub_pred_pos.to(self.device), pred_y.to(self.device))
+            svscore = self.cal_svc(sub_pred_pos, pred_y)
+            # print('svscore: ', svscore)
             svscore_list.append(svscore.view([-1, 1]))
         svscore_list = torch.cat(svscore_list, dim=1)
         svscore_list = torch.transpose(svscore_list, 0, 1)
         return svscore_list, sub_num
 
     def _uncertainty_calculate(self, data_loader):
+        print('Dissector uncertainty evaluation ...')
         weight_list = [0, 1, 2]
         result = []
         _, pred_y, _ = common_predict(data_loader, self.model, self.device)
-        pred_y = pred_y.to(self.device)
+        # pred_y = pred_y.to(self.device)
         svscore_list, sub_num = self.get_svscore(data_loader, pred_y)
         for weight in weight_list:
             pv_score = self.get_pvscore(svscore_list, sub_num, weight).detach().cpu()
-            result.append(common_ten2numpy(pv_score))
+            result.append(1-common_ten2numpy(pv_score)) # pick the 1-score as uncertainty score
         return result
 
 

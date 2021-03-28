@@ -22,6 +22,7 @@ class Code2Vec(nn.Module):
         self.a = nn.Parameter(torch.randn(1, embed_dim, 1))
         self.out = nn.Linear(embed_dim, output_dim)
         self.drop = nn.Dropout(dropout)
+        self.sub_num = [1]
 
     def forward(self, starts, paths, ends, length, device):
         W = self.W.repeat(len(starts), 1, 1)
@@ -50,3 +51,37 @@ class Code2Vec(nn.Module):
         #v = torch.bmm(x, z).squeeze(2)  # [batch size, embedding dim]
         out = self.out(v)  # [batch size, output_dim]
         return out
+
+    def get_hidden(self, starts, paths, ends, length, device):
+        res = []
+        # the model contrains embedding layer, attention layer, fc layer, we pick hidden state from the last two
+        W = self.W.repeat(len(starts), 1, 1)
+        # W = [batch size, embedding dim, embedding dim * 3]
+        embedded_starts = self.node_embedding(starts)
+        embedded_paths = self.path_embedding(paths)
+        embedded_ends = self.node_embedding(ends)
+        # embedded_* = [batch size, max length, embedding dim]
+
+        c = torch.cat((embedded_starts, embedded_paths, embedded_ends), dim=2)
+        c = self.drop(c)
+        c = c.permute(0, 2, 1)  # [batch, embedding_dim * 3, max_length]
+        x = torch.tanh(torch.bmm(W, c))  # [batch, embedding dim, max length]
+        x = x.permute(0, 2, 1)
+
+        a = self.a.repeat(len(starts), 1, 1)  # [batch, embedding dim, 1]
+        z = torch.bmm(x, a).squeeze(2)  # [batch size, max length]
+        z = F.softmax(z, dim=1)   # [batch size, max length]
+        z = z.unsqueeze(2)  # [batch size, max length, 1]
+
+        x = x.permute(0, 2, 1)  # [batch, embedding dim, max length]
+
+        v = torch.zeros(len(x), self.embedding_dim).to(device)
+        for i in range(len(x)):
+            v[i] = torch.bmm(
+                x[i:i+1, :, :length[i]], z[i:i+1, :length[i], :]
+            ).squeeze(2)
+
+        res.append(v.detach().cpu())
+        # v = torch.bmm(x, z).squeeze(2)  # [batch size, embedding dim]
+        # out = self.out(v)  # [batch size, output_dim]
+        return res
