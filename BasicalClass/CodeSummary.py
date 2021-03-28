@@ -1,8 +1,8 @@
 import os
 import torch.nn as nn
+import torch.optim as optim
 from BasicalClass.common_function import *
 from BasicalClass.BasicModule import BasicModule
-import torch.optim as optim
 from program_tasks.code_summary.Code2VecModule import Code2Vec
 from program_tasks.code_summary.CodeLoader import CodeLoader
 from program_tasks.code_summary.main import perpare_train, my_collate
@@ -10,31 +10,32 @@ from preprocess.checkpoint import Checkpoint
 
 
 class CodeSummary_Module(BasicModule):
-    DATA_DIR = 'java_dataset/data/code_summary-preprocess'
-    RES_DIR = 'java_dataset/se_tasks/code_summary/result'
-    CHECKPOINT_DIR_NAME = 'checkpoints'
-    MODEL_NAME = 'model_state.pt'
+    # DATA_DIR = 'java_dataset/data/code_summary-preprocess'
+    # RES_DIR = 'java_dataset/se_tasks/code_summary/result'
+    # CHECKPOINT_DIR_NAME = 'checkpoints'
+    # MODEL_NAME = 'model_state.pt'
 
-    def __init__(self, device, load_poor=False):
-        super(CodeSummary_Module, self).__init__(device, load_poor)
+    def __init__(self, device, res_dir, save_dir, data_dir, load_poor=False):
+        super(CodeSummary_Module, self).__init__(device, res_dir, save_dir, data_dir, load_poor)
 
-        self.train_loader, self.shift1_loader, self.shift2_loader, self.val_loader = self.load_data()
+        self.train_loader, self.shift1_loader, self.shift2_loader, self.shift3_loader = self.load_data()
         self.get_information()
         self.shift1_acc = common_cal_accuracy(self.shift1_pred_y, self.shift1_y)
         self.shift2_acc = common_cal_accuracy(self.shift2_pred_y, self.shift2_y)
-        self.val_acc = common_cal_accuracy(self.val_pred_y, self.val_y)
+        self.shift3_acc = common_cal_accuracy(self.shift3_pred_y, self.shift3_y)
+        # self.val_acc = common_cal_accuracy(self.val_pred_y, self.val_y)
         self.train_acc = common_cal_accuracy(self.train_pred_y, self.train_y)
 
         self.save_truth()
         print(
             'construct the module', self.__class__.__name__, 
-            'train acc %0.4f, val acc %0.4f, shift1 acc %0.4f, shift2 acc %0.4f' % (
-                self.train_acc, self.val_acc, self.shift1_acc, self.shift2_acc
+            'train acc %0.4f, shift1 acc %0.4f, shift2 acc %0.4f, shift3 acc %0.4f' % (
+                self.train_acc, self.shift1_acc, self.shift2_acc, self.shift3_acc
             )
         )
 
     def load_model(self):
-        latest_checkpoint_path = Checkpoint.get_latest_checkpoint(self.RES_DIR)
+        latest_checkpoint_path = Checkpoint.get_latest_checkpoint(self.res_dir)
         resume_checkpoint = Checkpoint.load(latest_checkpoint_path)
         model = resume_checkpoint.model
         # token2index, path2index, func2index, embed, tk2num =\
@@ -42,7 +43,7 @@ class CodeSummary_Module(BasicModule):
         # nodes_dim, paths_dim, output_dim = len(tk2num), len(path2index), len(func2index)
         # model = Code2Vec(nodes_dim, paths_dim, self.embed_dim, output_dim, embed)
         # # get latest ckpt model name
-        # checkpoints_path = os.path.join(self.RES_DIR, self.CHECKPOINT_DIR_NAME)
+        # checkpoints_path = os.path.join(self.res_dir, self.CHECKPOINT_DIR_NAME)
         # all_times = sorted(os.listdir(checkpoints_path), reverse=True)
         # model_dir = os.path.join(checkpoints_path, all_times[0])
         # model_path = os.path.join(model_dir, self.MODEL_NAME)
@@ -53,7 +54,7 @@ class CodeSummary_Module(BasicModule):
         return model
 
     def load_poor_model(self):
-        oldest_checkpoint_path = Checkpoint.get_latest_checkpoint(self.RES_DIR)
+        oldest_checkpoint_path = Checkpoint.get_latest_checkpoint(self.res_dir)
         resume_checkpoint = Checkpoint.load(oldest_checkpoint_path)
         model = resume_checkpoint.model
         return model
@@ -62,13 +63,16 @@ class CodeSummary_Module(BasicModule):
         token2index, path2index, func2index, embed, tk2num = \
             perpare_train(
                 self.tk_path, self.embed_type, self.vec_path, 
-                self.embed_dim, self.out_dir)
+                self.embed_dim, self.res_dir)
 
         train_db = CodeLoader(self.train_path, self.max_size, token2index, tk2num)
         shift1_db = CodeLoader(self.shift1_path, self.max_size, token2index, tk2num)
         shift2_db = CodeLoader(self.shift2_path, self.max_size, token2index, tk2num)
-        val_db = CodeLoader(self.val_path, self.max_size, token2index, tk2num)
-        print(f'train data length: {len(train_db)}, val length: {len(val_db)}, shift1 length: {len(shift1_db)}, shift2 length: {len(shift2_db)}')
+        shift3_db = CodeLoader(self.shift3_path, self.max_size, token2index, tk2num)
+        # val_db = CodeLoader(self.val_path, self.max_size, token2index, tk2num)
+        print('train data length: {}, shift1 length: {}, shift2 length: {}, shift3 length: {}'.format(
+            len(train_db), len(shift1_db), len(shift2_db), len(shift3_db)
+        ))
 
         train_loader = DataLoader(
             train_db, batch_size=self.train_batch_size, 
@@ -82,14 +86,16 @@ class CodeSummary_Module(BasicModule):
             shift2_db, batch_size=self.test_batch_size, 
             collate_fn=my_collate, shuffle=False
         )
-        val_loader = DataLoader(
-            val_db, batch_size=self.test_batch_size, 
+        shift3_loader = DataLoader(
+            shift3_db, batch_size=self.test_batch_size, 
             collate_fn=my_collate, shuffle=False
         )
 
-        print(f'train loader length: {len(train_loader)}, val loader length: {len(val_loader)}, shift1 loader length: {len(shift1_loader)}, shift2 loader length: {len(shift2_loader)}')
+        print('train loader size: {}, shift1 size: {}, shift2 size: {}, shift3 size: {}'.format(
+            len(train_loader), len(shift1_loader), len(shift2_loader), len(shift3_loader)
+        ))
         # return self.get_loader(train_db, val_db, test_db)
-        return train_loader, shift1_loader, shift2_loader, val_loader
+        return train_loader, shift1_loader, shift2_loader, shift3_loader
 
 
 if __name__ == '__main__':

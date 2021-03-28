@@ -273,17 +273,17 @@ def main(args_set):
         res2 = test_model(test_loader2, model, device, index2func, 'test2')
         res3 = test_model(test_loader3, model, device, index2func, 'test3')
         # res4 = test_model(test_loader4, model, device, index2func, 'test4')
+        merge_res = {**res1, **res2, **res3} # merge all the test results
 
         # save model checkpoint
         if res1['test1 acc'] > best_val_acc:
-            Checkpoint(model, optimizer, epoch, res1).save(out_dir)
+            Checkpoint(model, optimizer, epoch, merge_res).save(out_dir)
             best_val_acc = res1['test1 acc']
 
     total_ed_time = datetime.datetime.now()
     print('training experiment {} finished! Total cost time: {}'.format(
         experiment_name, total_ed_time - total_st_time
     ))
-
 
 
 

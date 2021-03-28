@@ -1,5 +1,5 @@
 import torch
-from Metric import Viallina
+from Metric.Baseline.Vanilla import Vanilla
 import argparse
 from BasicalClass import MODULE_LIST
 
@@ -11,7 +11,7 @@ def main(data_type, device_id, is_poor):
     print(device)
     module = data_type(device=device, load_poor=is_poor)
     print('now the module type is', module.__class__.__name__)
-    m = Viallina(module, device=device)
+    m = Vanilla(module, device=device)
     m.run(None)
 
 
