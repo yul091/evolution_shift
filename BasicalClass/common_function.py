@@ -5,6 +5,7 @@ import torch
 from torch.utils.data import DataLoader
 from torch.nn import functional as F
 import matplotlib.pyplot as plt
+from scipy.stats import entropy
 from sklearn.metrics import roc_curve, auc, average_precision_score
 
 
@@ -175,12 +176,14 @@ def common_get_maxpos(pos : torch.Tensor):
     return common_ten2numpy(test_pred_pos)
 
 def common_get_entropy(pos : torch.Tensor):
-    pred_prob = F.softmax(pos, dim=1)+1e-5 # (N, k)
+    k = pos.size(-1)
+    pred_prob = F.softmax(pos, dim=-1) # (N, k)
     # print('prediction softmax probability: ', pred_prob)
-    log_prob = pred_prob.log() # (N, k)
+    # log_prob = pred_prob.log() # (N, k)
     # print('prediction log softmax probability: ', log_prob)
-    entropy = (-pred_prob * log_prob).sum(dim=1) # (N, )
-    return common_ten2numpy(entropy)
+    # entropy = (-pred_prob * log_prob).sum(dim=1) # (N, )
+    etp = entropy(pred_prob, axis=-1)/np.log(k) # np.ndarray
+    return 1 - etp
 
 
 def common_ten2numpy(a:torch.Tensor):

@@ -18,14 +18,14 @@
 #   recommended to use a multi-core machine for the preprocessing 
 #   step and set this value to the number of cores.
 # PYTHON - python3 interpreter alias.
-DIR=data/spring-framework
+DIR=data
 TRAIN_DIR=$DIR/train
 VAL_DIR=$DIR/val
 TEST_DIR1=$DIR/test1
 TEST_DIR2=$DIR/test2
 TEST_DIR3=$DIR/test3
 
-DATASET_NAME='spring-framework_project'
+DATASET_NAME='java_project'
 MAX_CONTEXTS=200
 WORD_VOCAB_SIZE=1301136
 PATH_VOCAB_SIZE=911417

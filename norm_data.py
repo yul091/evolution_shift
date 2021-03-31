@@ -74,8 +74,8 @@ def main():
 
 
 if __name__ == '__main__':
-    FILENAME = 'wildfly_project'
-    GEN_FILE = 'wildfly_pkl'
+    FILENAME = 'java_project'
+    GEN_FILE = 'java_pkl'
     DIR = os.path.join('data', GEN_FILE)
     DATA_DIR = os.path.join('data', FILENAME)
     main()

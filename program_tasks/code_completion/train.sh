@@ -1,5 +1,5 @@
 #!/bin/bash
-PROJECT=elasticsearch
+PROJECT=java
 RES_DIR=program_tasks/code_completion/result/$PROJECT
 
 if [ ! -d $RES_DIR ]; then
@@ -8,7 +8,7 @@ else
   echo dir exist
 fi
 
-EPOCHS=50
+EPOCHS=300
 BATCH=512
 LR=0.005
 TRAIN_DATA=program_tasks/code_completion/dataset/$PROJECT/train.tsv
@@ -24,7 +24,7 @@ EXPERIMENT_NAME='code_completion'
 EXPERIMENT_LOG=$RES_DIR'/'$EXPERIMENT_NAME'.txt'
 echo $EXPERIMENT_NAME
 
-CUDA_VISIBLE_DEVICES=1 python -m program_tasks.code_completion.main \
+CUDA_VISIBLE_DEVICES=2 python -m program_tasks.code_completion.main \
 --train_data=$TRAIN_DATA --val_data=$VAL_DATA \
 --test_data1=$TEST_DATA1 --test_data2=$TEST_DATA2 --test_data3=$TEST_DATA3 \
 --embedding_type=$EMBEDDING_TYPE --embedding_dim=$EMBEDDING_DIM \

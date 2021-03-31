@@ -129,13 +129,13 @@ class BasicModule:
         self.shift1_truth = self.shift1_pred_y.eq(self.shift1_y)
         self.shift2_truth = self.shift2_pred_y.eq(self.shift2_y)
         self.shift3_truth = self.shift3_pred_y.eq(self.shift3_y)
-        truth = [
-            common_ten2numpy(self.train_truth), # torch to numpy cpu
-            common_ten2numpy(self.val_truth),
-            common_ten2numpy(self.shift1_truth),
-            common_ten2numpy(self.shift2_truth),
-            common_ten2numpy(self.shift3_truth),
-        ]
+        truth = {
+            'train': common_ten2numpy(self.train_truth), # torch to numpy cpu
+            'val': common_ten2numpy(self.val_truth),
+            'shift1': common_ten2numpy(self.shift1_truth),
+            'shift2': common_ten2numpy(self.shift2_truth),
+            'shift3': common_ten2numpy(self.shift3_truth),
+        }
         torch.save(
             truth, 
             os.path.join(self.save_dir, self.__class__.__name__) + '/truth.res'

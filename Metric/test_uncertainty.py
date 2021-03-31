@@ -24,12 +24,12 @@ if __name__ == '__main__':
         CodeSummary_Module
     ]
     MetricList = [
-        Vanilla,
-        ModelWithTemperature,
-        PVScore,
-        Mahalanobis,
-        ModelActivateDropout,
-        Mutation,
+        # Vanilla,
+        # ModelWithTemperature,
+        # PVScore,
+        # Mahalanobis,
+        # ModelActivateDropout,
+        # Mutation,
         Entropy,
     ]
 

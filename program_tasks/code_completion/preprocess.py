@@ -75,34 +75,62 @@ def parse_java(src_folder, dest_dir, dest_file_name):
 if __name__ == '__main__':
     from preprocess.train_split import JAVA_PROJECTS
 
-    for project_name in JAVA_PROJECTS:
-        data_dir = "data/" + project_name
-        dest_dir = "program_tasks/code_completion/dataset/" + project_name
+    # for project_name in JAVA_PROJECTS:
+    #     data_dir = "data/" + project_name
+    #     dest_dir = "program_tasks/code_completion/dataset/" + project_name
 
-        src_fn_dict = {
-            'test1.txt': data_dir + '/test1',
-            'test2.txt': data_dir + '/test2',
-            'test3.txt': data_dir + '/test3',
-            'val.txt': data_dir + '/val',
-            # 'test4.txt': data_dir + 'test1',
-            # 'train.txt': [
-            #     'dataset/train/elasticsearch',
-            #     'dataset/train/gradle',
-            #     'dataset/train/wildfly',
-            # ]
-            'train.txt': data_dir + '/train'
-        }
+    #     src_fn_dict = {
+    #         'test1.txt': data_dir + '/test1',
+    #         'test2.txt': data_dir + '/test2',
+    #         'test3.txt': data_dir + '/test3',
+    #         'val.txt': data_dir + '/val',
+    #         # 'test4.txt': data_dir + 'test1',
+    #         # 'train.txt': [
+    #         #     'dataset/train/elasticsearch',
+    #         #     'dataset/train/gradle',
+    #         #     'dataset/train/wildfly',
+    #         # ]
+    #         'train.txt': data_dir + '/train'
+    #     }
         
-        if not os.path.exists(dest_dir):
-            os.makedirs(dest_dir)
+    #     if not os.path.exists(dest_dir):
+    #         os.makedirs(dest_dir)
 
-        for name, src in src_fn_dict.items():
-            parse_java(src, dest_dir, name)
+    #     for name, src in src_fn_dict.items():
+    #         parse_java(src, dest_dir, name)
 
-        for name in src_fn_dict:
-            origin_file = os.path.join(dest_dir, name)
-            dest_file = origin_file.rstrip('.txt') + '.tsv'
-            create_tsv_file(origin_file, dest_file)
+    #     for name in src_fn_dict:
+    #         origin_file = os.path.join(dest_dir, name)
+    #         dest_file = origin_file.rstrip('.txt') + '.tsv'
+    #         create_tsv_file(origin_file, dest_file)
+
+    data_dir = "data"
+    dest_dir = "program_tasks/code_completion/dataset/java"
+
+    src_fn_dict = {
+        'test1.txt': data_dir + '/test1',
+        'test2.txt': data_dir + '/test2',
+        'test3.txt': data_dir + '/test3',
+        'val.txt': data_dir + '/val',
+        # 'test4.txt': data_dir + 'test1',
+        # 'train.txt': [
+        #     'dataset/train/elasticsearch',
+        #     'dataset/train/gradle',
+        #     'dataset/train/wildfly',
+        # ]
+        'train.txt': data_dir + '/train'
+    }
+    
+    if not os.path.exists(dest_dir):
+        os.makedirs(dest_dir)
+
+    for name, src in src_fn_dict.items():
+        parse_java(src, dest_dir, name)
+
+    for name in src_fn_dict:
+        origin_file = os.path.join(dest_dir, name)
+        dest_file = origin_file.rstrip('.txt') + '.tsv'
+        create_tsv_file(origin_file, dest_file)
 
     
     
