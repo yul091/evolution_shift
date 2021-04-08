@@ -27,7 +27,7 @@ class Mahalanobis(BasicUncertainty):
         u_list, std_list = [], []
         for target in range(self.class_num):
             fx_tar = fx[torch.where(y == target)]
-            mean_val = torch.mean(fx_tar, dim = 0)
+            mean_val = torch.mean(fx_tar.float(), dim = 0)
             std_val = (fx_tar - mean_val).transpose(dim0=0, dim1= 1).mm((fx_tar - mean_val))
             u_list.append(mean_val)
             std_list.append(std_val)
@@ -57,7 +57,7 @@ class Mahalanobis(BasicUncertainty):
             paths = paths.to(self.device)
             eds = eds.to(self.device)
             y = torch.tensor(y, dtype=torch.long)
-            output = model(sts, paths, eds, length, self.device)
+            output = self.model(sts, paths, eds, length, self.device)
             _, pred_y = torch.max(output, dim=1)
             # detach
             sts = sts.detach().cpu()

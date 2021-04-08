@@ -12,9 +12,9 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('-device', type=int, default=0, help='the gpu id')
     parser.add_argument('-module_id', type=int, default=0, help='the task id')
-    parser.add_argument('-res_dir', type=str, default='program_tasks/code_summary/result/wildfly')
-    parser.add_argument('-data_dir', type=str, default='data/wildfly_pkl')
-    parser.add_argument('-save_dir', type=str, default='Uncertainty_Results/wildfly')
+    parser.add_argument('-res_dir', type=str, default='program_tasks/code_summary/result/java')
+    parser.add_argument('-data_dir', type=str, default='data/java_pkl')
+    parser.add_argument('-save_dir', type=str, default='Uncertainty_Results/java')
 
     args = parser.parse_args()
     print(vars(args))
@@ -27,10 +27,10 @@ if __name__ == '__main__':
         # Vanilla,
         # ModelWithTemperature,
         # PVScore,
-        # Mahalanobis,
+        Mahalanobis,
         # ModelActivateDropout,
+        # Entropy,
         # Mutation,
-        Entropy,
     ]
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")

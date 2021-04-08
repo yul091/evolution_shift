@@ -1,4 +1,5 @@
 import os
+from re import M
 import torch
 # import matplotlib.pyplot as plt
 import numpy as np
@@ -7,16 +8,17 @@ from sklearn.metrics import roc_curve, auc, average_precision_score, brier_score
 
 
 class Uncertainty_Eval():
-    def __init__(self, res_dir, project, task='CodeSummary_Module'):
+    def __init__(self, res_dir, projects, save_dir, task='CodeSummary_Module'):
         """
         res_dir (str): path of uncertainty result, Default: "Uncertainty_Results".
-        project (str): project name like gradle, elasticsearch, etc.
+        projects (list): list of project names like [gradle, elasticsearch, etc.]
+        save_dir (str): path of saving evaluation res, Default: "Uncertainty_Eval/java".
         task (str): task name like CodeSummary_Module.
         """
         self.res_dir = res_dir
-        self.project = project
+        self.projects = projects
         self.task = task
-
+        self.save_dir = save_dir
         
     def common_get_auc(self, y_test, y_score, name=None):
         fpr, tpr, threshold = roc_curve(y_test, y_score)  # calculate true positive & false positive
@@ -49,85 +51,220 @@ class Uncertainty_Eval():
 
 
     def evaluation(self):
-        
-        print('Evaluating project {} ...'.format(self.project))
-        trg_dir = os.path.join(self.res_dir, self.project, self.task)
-        truth = torch.load(os.path.join(trg_dir,'truth.res'))
-        uncertainty_res = [f for f in os.listdir(trg_dir) if f.endswith('.res') and f != 'truth.res']
-        # print(uncertainty_res)
-        print('train_acc: %.4f, val_acc: %.4f, shift1_acc: %.4f, shift2_acc: %.4f, shift3_acc: %.4f' % (
-            np.mean(truth['train']), np.mean(truth['val']), 
-            np.mean(truth['shift1']), np.mean(truth['shift2']),
-            np.mean(truth['shift3'])
-        ))
-        for metric in uncertainty_res:
-            metric_res = torch.load(os.path.join(trg_dir, metric))
-            metric_name = metric[:-4] # get rid of endswith '.res'
-            if metric_name not in ['Mutation', 'PVScore']:
-                # average uncertainty
-                print('%s: \nmUncertainty: val: %.4f, shift1: %.4f, shift2: %.4f, shift3: %.4f' % (
-                    metric_name,
-                    np.mean(metric_res['val']), np.mean(metric_res['shift1']), 
-                    np.mean(metric_res['shift2']), np.mean(metric_res['shift3'])
+        eval_res = {}
+        if isinstance(self.projects, list):
+            for project in self.projects:
+                eval_res[project] = {}
+                print('Evaluating project {} ...'.format(project))
+                trg_dir = os.path.join(self.res_dir, project, self.task)
+                truth = torch.load(os.path.join(trg_dir,'truth.res'))
+                uncertainty_res = [f for f in os.listdir(trg_dir) if f.endswith('.res') and f != 'truth.res']
+                # print(uncertainty_res)
+                print('train_acc: %.4f, val_acc: %.4f, shift1_acc: %.4f, shift2_acc: %.4f, shift3_acc: %.4f' % (
+                    np.mean(truth['train']), np.mean(truth['val']), 
+                    np.mean(truth['shift1']), np.mean(truth['shift2']),
+                    np.mean(truth['shift3'])
                 ))
-                # AUC
-                print('AUC: val: %.4f, shift1: %.4f, shift2: %.4f, shift3: %.4f' % ( 
-                    self.common_get_auc(truth['val'], metric_res['val']), 
-                    self.common_get_auc(truth['shift1'], metric_res['shift1']), 
-                    self.common_get_auc(truth['shift2'], metric_res['shift2']), 
-                    self.common_get_auc(truth['shift3'], metric_res['shift3']),
-                ))
-                # AUPR
-                print('AUPR: val: %.4f, shift1: %.4f, shift2: %.4f, shift3: %.4f' % ( 
-                    self.common_get_aupr(truth['val'], metric_res['val']), 
-                    self.common_get_aupr(truth['shift1'], metric_res['shift1']), 
-                    self.common_get_aupr(truth['shift2'], metric_res['shift2']), 
-                    self.common_get_aupr(truth['shift3'], metric_res['shift3']),
-                ))
-                # Brier score
-                print('Brier: val: %.4f, shift1: %.4f, shift2: %.4f, shift3: %.4f' % ( 
-                    self.common_get_brier(truth['val'], metric_res['val']), 
-                    self.common_get_brier(truth['shift1'], metric_res['shift1']), 
-                    self.common_get_brier(truth['shift2'], metric_res['shift2']), 
-                    self.common_get_brier(truth['shift3'], metric_res['shift3']),
-                ))
-            else:
-                # average uncertainty
-                print('%s: \nmUncertainty: val: %.4f, shift1: %.4f, shift2: %.4f, shift3: %.4f' % (
-                    metric_name,
-                    np.mean(metric_res['val'][0]), np.mean(metric_res['shift1'][0]), 
-                    np.mean(metric_res['shift2'][0]), np.mean(metric_res['shift3'][0])
-                ))
-                # AUC
-                print('AUC: val: %.4f, shift1: %.4f, shift2: %.4f, shift3: %.4f' % ( 
-                    self.common_get_auc(truth['val'], metric_res['val'][0]), 
-                    self.common_get_auc(truth['shift1'], metric_res['shift1'][0]), 
-                    self.common_get_auc(truth['shift2'], metric_res['shift2'][0]), 
-                    self.common_get_auc(truth['shift3'], metric_res['shift3'][0]),
-                ))
-                # AUPR
-                print('AUPR: val: %.4f, shift1: %.4f, shift2: %.4f, shift3: %.4f' % ( 
-                    self.common_get_aupr(truth['val'], metric_res['val'][0]), 
-                    self.common_get_aupr(truth['shift1'], metric_res['shift1'][0]), 
-                    self.common_get_aupr(truth['shift2'], metric_res['shift2'][0]), 
-                    self.common_get_aupr(truth['shift3'], metric_res['shift3'][0]),
-                ))
-                # Brier score
-                print('Brier: val: %.4f, shift1: %.4f, shift2: %.4f, shift3: %.4f' % ( 
-                    self.common_get_brier(truth['val'], metric_res['val'][0]), 
-                    self.common_get_brier(truth['shift1'], metric_res['shift1'][0]), 
-                    self.common_get_brier(truth['shift2'], metric_res['shift2'][0]), 
-                    self.common_get_brier(truth['shift3'], metric_res['shift3'][0]),
-                ))
+                for metric in uncertainty_res:
+                    metric_res = torch.load(os.path.join(trg_dir, metric))
+                    metric_name = metric[:-4] # get rid of endswith '.res'
+                    eval_res[project][metric_name] = {}
+
+                    if metric_name not in ['Mutation', 'PVScore']:
+                        # average uncertainty
+                        mU_val = np.mean(metric_res['val'])
+                        mU_shift1 = np.mean(metric_res['shift1'])
+                        mU_shift2 = np.mean(metric_res['shift2'])
+                        mU_shift3 = np.mean(metric_res['shift3'])
+                        print('%s: \nmUncertainty: val: %.4f, shift1: %.4f, shift2: %.4f, shift3: %.4f' % (
+                            metric_name, mU_val, mU_shift1, mU_shift2, mU_shift3,
+                        ))
+                        # AUC
+                        AUC_val = self.common_get_auc(truth['val'], metric_res['val'])
+                        AUC_shift1 = self.common_get_auc(truth['shift1'], metric_res['shift1'])
+                        AUC_shift2 = self.common_get_auc(truth['shift2'], metric_res['shift2'])
+                        AUC_shift3 = self.common_get_auc(truth['shift3'], metric_res['shift3'])
+                        print('AUC: val: %.4f, shift1: %.4f, shift2: %.4f, shift3: %.4f' % ( 
+                            AUC_val, AUC_shift1, AUC_shift2, AUC_shift3,
+                        ))
+                        # AUPR
+                        AUPR_val = self.common_get_aupr(truth['val'], metric_res['val'])
+                        AUPR_shift1 = self.common_get_aupr(truth['shift1'], metric_res['shift1'])
+                        AUPR_shift2 = self.common_get_aupr(truth['shift2'], metric_res['shift2'])
+                        AUPR_shift3 = self.common_get_aupr(truth['shift3'], metric_res['shift3'])
+                        print('AUPR: val: %.4f, shift1: %.4f, shift2: %.4f, shift3: %.4f' % ( 
+                            AUPR_val, AUPR_shift1, AUPR_shift2, AUPR_shift3,
+                        ))
+                        # Brier score
+                        Brier_val = self.common_get_brier(truth['val'], metric_res['val'])
+                        Brier_shift1 = self.common_get_brier(truth['shift1'], metric_res['shift1'])
+                        Brier_shift2 = self.common_get_brier(truth['shift2'], metric_res['shift2'])
+                        Brier_shift3 = self.common_get_brier(truth['shift3'], metric_res['shift3'])
+                        print('Brier: val: %.4f, shift1: %.4f, shift2: %.4f, shift3: %.4f' % ( 
+                            Brier_val, Brier_shift1, Brier_shift2, Brier_shift3,
+                        ))
+                    else:
+                        # average uncertainty
+                        mU_val = np.mean(metric_res['val'][0])
+                        mU_shift1 = np.mean(metric_res['shift1'][0])
+                        mU_shift2 = np.mean(metric_res['shift2'][0])
+                        mU_shift3 = np.mean(metric_res['shift3'][0])
+                        print('%s: \nmUncertainty: val: %.4f, shift1: %.4f, shift2: %.4f, shift3: %.4f' % (
+                            metric_name, mU_val, mU_shift1, mU_shift2, mU_shift3,
+                        ))
+                        # AUC
+                        AUC_val = self.common_get_auc(truth['val'], metric_res['val'][0])
+                        AUC_shift1 = self.common_get_auc(truth['shift1'], metric_res['shift1'][0])
+                        AUC_shift2 = self.common_get_auc(truth['shift2'], metric_res['shift2'][0])
+                        AUC_shift3 = self.common_get_auc(truth['shift3'], metric_res['shift3'][0])
+                        print('AUC: val: %.4f, shift1: %.4f, shift2: %.4f, shift3: %.4f' % ( 
+                            AUC_val, AUC_shift1, AUC_shift2, AUC_shift3,
+                        ))
+                        # AUPR
+                        AUPR_val = self.common_get_aupr(truth['val'], metric_res['val'][0])
+                        AUPR_shift1 = self.common_get_aupr(truth['shift1'], metric_res['shift1'][0])
+                        AUPR_shift2 = self.common_get_aupr(truth['shift2'], metric_res['shift2'][0])
+                        AUPR_shift3 = self.common_get_aupr(truth['shift3'], metric_res['shift3'][0])
+                        print('AUPR: val: %.4f, shift1: %.4f, shift2: %.4f, shift3: %.4f' % ( 
+                            AUPR_val, AUPR_shift1, AUPR_shift2, AUPR_shift3,
+                        ))
+                        # Brier score
+                        Brier_val = self.common_get_brier(truth['val'], metric_res['val'][0])
+                        Brier_shift1 = self.common_get_brier(truth['shift1'], metric_res['shift1'][0])
+                        Brier_shift2 = self.common_get_brier(truth['shift2'], metric_res['shift2'][0])
+                        Brier_shift3 = self.common_get_brier(truth['shift3'], metric_res['shift3'][0])
+                        print('Brier: val: %.4f, shift1: %.4f, shift2: %.4f, shift3: %.4f' % ( 
+                            Brier_val, Brier_shift1, Brier_shift2, Brier_shift3,
+                        ))
+
+                    eval_res[project][metric_name]['mUncertain'] = {
+                        'val': mU_val, 'shift1': mU_shift1, 'shift2': mU_shift2, 'shift3': mU_shift3,
+                    }
+                    eval_res[project][metric_name]['AUC'] = {
+                        'val': AUC_val, 'shift1': AUC_shift1, 'shift2': AUC_shift2, 'shift3': AUC_shift3,
+                    }
+                    eval_res[project][metric_name]['AUPR'] = {
+                        'val': AUPR_val, 'shift1': AUPR_shift1, 'shift2': AUPR_shift2, 'shift3': AUPR_shift3,
+                    }
+                    eval_res[project][metric_name]['Brier'] = {
+                        'val': Brier_val, 'shift1': Brier_shift1, 'shift2': Brier_shift2, 'shift3': Brier_shift3,
+                    }
+
+        else: # all java files trained together
+            project = 'java'
+            trg_dir = os.path.join(self.res_dir, project, self.task)
+            truth = torch.load(os.path.join(trg_dir,'truth.res'))
+            uncertainty_res = [f for f in os.listdir(trg_dir) if f.endswith('.res') and f != 'truth.res']
+            # print(uncertainty_res)
+            print('train_acc: %.4f, val_acc: %.4f, shift1_acc: %.4f, shift2_acc: %.4f, shift3_acc: %.4f' % (
+                np.mean(truth['train']), np.mean(truth['val']), 
+                np.mean(truth['shift1']), np.mean(truth['shift2']),
+                np.mean(truth['shift3'])
+            ))
+            for metric in uncertainty_res:
+                metric_res = torch.load(os.path.join(trg_dir, metric))
+                metric_name = metric[:-4] # get rid of endswith '.res'
+                eval_res[metric_name] = {}
+
+                if metric_name not in ['Mutation', 'PVScore']:
+                    # average uncertainty
+                    mU_val = np.mean(metric_res['val'])
+                    mU_shift1 = np.mean(metric_res['shift1'])
+                    mU_shift2 = np.mean(metric_res['shift2'])
+                    mU_shift3 = np.mean(metric_res['shift3'])
+                    print('%s: \nmUncertainty: val: %.4f, shift1: %.4f, shift2: %.4f, shift3: %.4f' % (
+                        metric_name, mU_val, mU_shift1, mU_shift2, mU_shift3,
+                    ))
+                    # AUC
+                    AUC_val = self.common_get_auc(truth['val'], metric_res['val'])
+                    AUC_shift1 = self.common_get_auc(truth['shift1'], metric_res['shift1'])
+                    AUC_shift2 = self.common_get_auc(truth['shift2'], metric_res['shift2'])
+                    AUC_shift3 = self.common_get_auc(truth['shift3'], metric_res['shift3'])
+                    print('AUC: val: %.4f, shift1: %.4f, shift2: %.4f, shift3: %.4f' % ( 
+                        AUC_val, AUC_shift1, AUC_shift2, AUC_shift3,
+                    ))
+                    # AUPR
+                    AUPR_val = self.common_get_aupr(truth['val'], metric_res['val'])
+                    AUPR_shift1 = self.common_get_aupr(truth['shift1'], metric_res['shift1'])
+                    AUPR_shift2 = self.common_get_aupr(truth['shift2'], metric_res['shift2'])
+                    AUPR_shift3 = self.common_get_aupr(truth['shift3'], metric_res['shift3'])
+                    print('AUPR: val: %.4f, shift1: %.4f, shift2: %.4f, shift3: %.4f' % ( 
+                        AUPR_val, AUPR_shift1, AUPR_shift2, AUPR_shift3,
+                    ))
+                    # Brier score
+                    Brier_val = self.common_get_brier(truth['val'], metric_res['val'])
+                    Brier_shift1 = self.common_get_brier(truth['shift1'], metric_res['shift1'])
+                    Brier_shift2 = self.common_get_brier(truth['shift2'], metric_res['shift2'])
+                    Brier_shift3 = self.common_get_brier(truth['shift3'], metric_res['shift3'])
+                    print('Brier: val: %.4f, shift1: %.4f, shift2: %.4f, shift3: %.4f' % ( 
+                        Brier_val, Brier_shift1, Brier_shift2, Brier_shift3,
+                    ))
+                else:
+                    # average uncertainty
+                    mU_val = np.mean(metric_res['val'][0])
+                    mU_shift1 = np.mean(metric_res['shift1'][0])
+                    mU_shift2 = np.mean(metric_res['shift2'][0])
+                    mU_shift3 = np.mean(metric_res['shift3'][0])
+                    print('%s: \nmUncertainty: val: %.4f, shift1: %.4f, shift2: %.4f, shift3: %.4f' % (
+                        metric_name, mU_val, mU_shift1, mU_shift2, mU_shift3,
+                    ))
+                    # AUC
+                    AUC_val = self.common_get_auc(truth['val'], metric_res['val'][0])
+                    AUC_shift1 = self.common_get_auc(truth['shift1'], metric_res['shift1'][0])
+                    AUC_shift2 = self.common_get_auc(truth['shift2'], metric_res['shift2'][0])
+                    AUC_shift3 = self.common_get_auc(truth['shift3'], metric_res['shift3'][0])
+                    print('AUC: val: %.4f, shift1: %.4f, shift2: %.4f, shift3: %.4f' % ( 
+                        AUC_val, AUC_shift1, AUC_shift2, AUC_shift3,
+                    ))
+                    # AUPR
+                    AUPR_val = self.common_get_aupr(truth['val'], metric_res['val'][0])
+                    AUPR_shift1 = self.common_get_aupr(truth['shift1'], metric_res['shift1'][0])
+                    AUPR_shift2 = self.common_get_aupr(truth['shift2'], metric_res['shift2'][0])
+                    AUPR_shift3 = self.common_get_aupr(truth['shift3'], metric_res['shift3'][0])
+                    print('AUPR: val: %.4f, shift1: %.4f, shift2: %.4f, shift3: %.4f' % ( 
+                        AUPR_val, AUPR_shift1, AUPR_shift2, AUPR_shift3,
+                    ))
+                    # Brier score
+                    Brier_val = self.common_get_brier(truth['val'], metric_res['val'][0])
+                    Brier_shift1 = self.common_get_brier(truth['shift1'], metric_res['shift1'][0])
+                    Brier_shift2 = self.common_get_brier(truth['shift2'], metric_res['shift2'][0])
+                    Brier_shift3 = self.common_get_brier(truth['shift3'], metric_res['shift3'][0])
+                    print('Brier: val: %.4f, shift1: %.4f, shift2: %.4f, shift3: %.4f' % ( 
+                        Brier_val, Brier_shift1, Brier_shift2, Brier_shift3,
+                    ))
+
+                eval_res[metric_name]['mUncertain'] = {
+                    'val': mU_val, 'shift1': mU_shift1, 'shift2': mU_shift2, 'shift3': mU_shift3,
+                }
+                eval_res[metric_name]['AUC'] = {
+                    'val': AUC_val, 'shift1': AUC_shift1, 'shift2': AUC_shift2, 'shift3': AUC_shift3,
+                }
+                eval_res[metric_name]['AUPR'] = {
+                    'val': AUPR_val, 'shift1': AUPR_shift1, 'shift2': AUPR_shift2, 'shift3': AUPR_shift3,
+                }
+                eval_res[metric_name]['Brier'] = {
+                    'val': Brier_val, 'shift1': Brier_shift1, 'shift2': Brier_shift2, 'shift3': Brier_shift3,
+                }
+
+        # save evaluation res
+        if not os.path.exists(os.path.join(self.save_dir, self.task)):
+            os.makedirs(os.path.join(self.save_dir, self.task))
+        save_name = os.path.join(self.save_dir, self.task, 'uncertainty_eval.res')
+        torch.save(eval_res, save_name)
 
 
 
 if __name__ == "__main__":
     from preprocess.train_split import JAVA_PROJECTS
 
-    for project in JAVA_PROJECTS:
-
-        eval_m = Uncertainty_Eval(res_dir="Uncertainty_Results", project=project)
-        eval_m.evaluation()
+    # eval_m = Uncertainty_Eval(
+    #     res_dir='Uncertainty_Results', projects=JAVA_PROJECTS, 
+    #     save_dir='Uncertainty_Eval/java', task='CodeSummary_Module'
+    # )
+    eval_m = Uncertainty_Eval(
+        res_dir='Uncertainty_Results', projects='java', 
+        save_dir='Uncertainty_Eval/java', task='CodeSummary_Module'
+    )
+    eval_m.evaluation()
 
 

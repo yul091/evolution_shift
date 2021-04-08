@@ -196,43 +196,30 @@ def main(args_set):
         start_epoch = 1
 
     # build test loader
-    # random sample max_size training samples
-    st_time = datetime.datetime.now()
     train_dataset = CodeLoader(train_path, None, token2index, tk2num)
-    # train_loader = DataLoader(train_dataset, batch_size=train_batch, collate_fn=my_collate)
-    ed_time = datetime.datetime.now()
-    print('train dataset size is ', len(train_dataset), 'cost time', ed_time - st_time)
-
-    st_time = datetime.datetime.now()
     val_dataset = CodeLoader(val_path, None, token2index, tk2num)
-    # train_loader = DataLoader(train_dataset, batch_size=train_batch, collate_fn=my_collate)
-    ed_time = datetime.datetime.now()
-    print('val dataset size is ', len(val_dataset), 'cost time', ed_time - st_time)
-
-    st_time = datetime.datetime.now()
     test_dataset1 = CodeLoader(test_path1, None, token2index, tk2num)
-    # test_loader1 = DataLoader(test_dataset1, batch_size=train_batch, collate_fn=my_collate)
-    ed_time = datetime.datetime.now()
-    print('test dataset1 size is ', len(test_dataset1), 'cost time', ed_time - st_time)
-
-    st_time = datetime.datetime.now()
     test_dataset2 = CodeLoader(test_path2, None, token2index, tk2num)
-    # test_loader2 = DataLoader(test_dataset2, batch_size=train_batch, collate_fn=my_collate)
-    ed_time = datetime.datetime.now()
-    print('test dataset2 size is ', len(test_dataset2), 'cost time', ed_time - st_time)
-
-    st_time = datetime.datetime.now()
     test_dataset3 = CodeLoader(test_path3, None, token2index, tk2num)
-    # test_loader3 = DataLoader(test_dataset3, batch_size=train_batch, collate_fn=my_collate)
-    ed_time = datetime.datetime.now()
-    print('test dataset3 size is ', len(test_dataset3), 'cost time', ed_time - st_time)
 
-    # st_time = datetime.datetime.now()
-    # test_dataset4 = CodeLoader(test_path4, None, token2index, tk2num)
-    # # test_loader4 = DataLoader(test_dataset4, batch_size=train_batch, collate_fn=my_collate)
-    # ed_time = datetime.datetime.now()
-    # print('test dataset4 size is ', len(test_dataset4), 'cost time', ed_time - st_time)
+    # train_loader = DataLoader(train_dataset, batch_size=train_batch, collate_fn=my_collate)
+    print('train data size {}, val data size {}, shift1 data size {}, shift2 data size {}, shift3 data size {}'.format(
+        len(train_dataset), len(val_dataset), len(test_dataset1), 
+        len(test_dataset2), len(test_dataset3)
+    ))
 
+    if max_size is None:
+        train_loader = DataLoader(train_dataset, batch_size=train_batch, 
+                                  collate_fn=my_collate)
+        val_loader = DataLoader(val_dataset, batch_size=train_batch, 
+                                collate_fn=my_collate)
+        test_loader1 = DataLoader(test_dataset1, batch_size=train_batch, 
+                                  collate_fn=my_collate)
+        test_loader2 = DataLoader(test_dataset2, batch_size=train_batch, 
+                                  collate_fn=my_collate)
+        test_loader3 = DataLoader(test_dataset3, batch_size=train_batch, 
+                                  collate_fn=my_collate)
+    
     # training
     print('begin training experiment {} ...'.format(experiment_name))
 
@@ -242,32 +229,17 @@ def main(args_set):
 
     for epoch in range(start_epoch, epochs+1):
         # print('max size: {}'.format(max_size))
-        if max_size is None:
-            train_loader = DataLoader(train_dataset, batch_size=train_batch, 
-                                      collate_fn=my_collate)
-            val_loader = DataLoader(val_dataset, batch_size=train_batch, 
-                                      collate_fn=my_collate)
-            test_loader1 = DataLoader(test_dataset1, batch_size=train_batch, 
-                                      collate_fn=my_collate)
-            test_loader2 = DataLoader(test_dataset2, batch_size=train_batch, 
-                                      collate_fn=my_collate)
-            test_loader3 = DataLoader(test_dataset3, batch_size=train_batch, 
-                                      collate_fn=my_collate)
-        else:
+        if max_size is not None:
             mom = min(
-                max_size, 
-                len(train_dataset), 
-                len(val_dataset),
-                len(test_dataset1), 
-                len(test_dataset2), 
-                len(test_dataset3)
+                max_size, len(train_dataset), len(test_dataset1), 
+                len(test_dataset2), len(test_dataset3),
             )
             idx = np.random.randint(0, mom, mom)
             train_sampler = sampler.SubsetRandomSampler(idx)
             train_loader = DataLoader(train_dataset, batch_size=train_batch, 
                                       collate_fn=my_collate, sampler=train_sampler)
             val_loader = DataLoader(val_dataset, batch_size=train_batch, 
-                                      collate_fn=my_collate, sampler=train_sampler)
+                                    collate_fn=my_collate)
             test_loader1 = DataLoader(test_dataset1, batch_size=train_batch, 
                                       collate_fn=my_collate, sampler=train_sampler)
             test_loader2 = DataLoader(test_dataset2, batch_size=train_batch, 

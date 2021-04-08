@@ -63,4 +63,4 @@ class ModelActivateDropout(BasicUncertainty):
             mc_result.append(common_ten2numpy(res).reshape([-1, 1]))
         mc_result = np.concatenate(mc_result, axis=1)
         score = self.label_chgrate(orig_pred, mc_result)
-        return 1-score
+        return score
