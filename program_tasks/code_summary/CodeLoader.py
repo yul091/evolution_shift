@@ -26,15 +26,16 @@ class CodeLoader(Dataset):
     def __init__(self, file_name, max_size, token2index, tk2num, idx=None):
         index2token = self.dict2list(token2index)
         with open(file_name, 'rb') as f:
-            dataset = pickle.load(f)
-            self.dataset = np.array(dataset)
-            # random.shuffle(self.dataset)
+            self.dataset = pickle.load(f)
+            random.shuffle(self.dataset)
         if max_size is not None:
             self.dataset = self.dataset[:max_size]
         if tk2num is not None:
             self.transferdata(index2token, tk2num)
         if idx is not None:
-            self.dataset = self.dataset[idx]
+            self.dataset = np.array(self.dataset)[idx]
+            self.dataset = list(self.dataset)
+            
 
 
     def __getitem__(self, index):

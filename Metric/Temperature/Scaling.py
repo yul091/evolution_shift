@@ -26,14 +26,10 @@ class ModelWithTemperature(BasicUncertainty):
             instance.save_dir, instance.__class__.__name__, 'temperature.tmp'
         ))
 
-    # def forward(self, x):
-    #     logits = self.model(x)
-    #     return self.temperature_scale(logits)
-
     # modified forward for code summary task
-    def forward(self, sts, paths, eds, length, device):
+    def forward(self, *input, **kwargs):
         # here since the model is code_summary model, the input has to be changed
-        logits = self.model(sts, paths, eds, length, device)
+        logits = self.model(*input, **kwargs)
         return self.temperature_scale(logits)
 
     def temperature_scale(self, logits):
@@ -60,38 +56,44 @@ class ModelWithTemperature(BasicUncertainty):
         logits_list = []
         labels_list = []
         with torch.no_grad():
-            # for x, label in valid_loader:
-            #     x = x.to(self.device)
-            #     logits = self.model(x)
-            #     logits_list.append(logits)
-            #     labels_list.append(label)
-           
-            for i, ((sts, paths, eds), y, length) in enumerate(valid_loader):
-                torch.cuda.empty_cache()
-                sts = sts.to(self.device)
-                paths = paths.to(self.device)
-                eds = eds.to(self.device)
-                y = torch.tensor(y, dtype=torch.long).to(self.device)
-                logits = self.model(sts, paths, eds, length, self.device)
-                # _, pred_y = torch.max(output, dim=1)
-                
-                # detach
-                sts = sts.detach().cpu()
-                paths = paths.detach().cpu()
-                eds = eds.detach().cpu()
 
-                if isinstance(logits, tuple):
-                    logits = (py.detach().cpu() for py in logits)
-                else:
+            if self.module_id == 0: # code summary
+                for i, ((sts, paths, eds), y, length) in enumerate(valid_loader):
+                    torch.cuda.empty_cache()
+                    sts = sts.to(self.device)
+                    paths = paths.to(self.device)
+                    eds = eds.to(self.device)
+                    y = torch.tensor(y, dtype=torch.long)
+                    logits = self.model(sts, paths, eds, length, self.device)
+                    
+                    # detach
+                    sts = sts.detach().cpu()
+                    paths = paths.detach().cpu()
+                    eds = eds.detach().cpu()
+
+                    if isinstance(logits, tuple):
+                        logits = (py.detach().cpu() for py in logits)
+                    else:
+                        logits = logits.detach().cpu()
+
+                    logits_list.append(logits)
+                    labels_list.append(y)
+
+            elif self.module_id == 1: # code completion
+                for i, (input, y, _) in enumerate(valid_loader):
+                    torch.cuda.empty_cache()
+                    input = input.to(self.device)
+                    logits = self.model(input)
+
+                    # detach
+                    input = input.detach().cpu()
                     logits = logits.detach().cpu()
+                
+                    logits_list.append(logits)
+                    labels_list.append(y.long())
+            else:
+                raise TypeError()
 
-                if isinstance(y, tuple):
-                    y = (y_e.detach().cpu() for y_e in y)
-                else:
-                    y = y.detach().cpu()
-
-                logits_list.append(logits)
-                labels_list.append(y)
 
             # logits = torch.cat(logits_list).to(self.device)
             # labels = torch.cat(labels_list).to(self.device)
@@ -120,7 +122,7 @@ class ModelWithTemperature(BasicUncertainty):
         return self
 
     def _uncertainty_calculate(self, data_loader):
-        score, _, _ = common_predict(data_loader, self, self.device)
+        score, _, _ = common_predict(data_loader, self, self.device, module_id=self.module_id)
         score = common_get_maxpos(score)
         return score
 

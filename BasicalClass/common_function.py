@@ -42,60 +42,78 @@ def common_predict_y(dataset, model, device, batch_size = 32, ): # Todo : modeif
             torch.cat(y_list, dim = 0).view([-1]).to(device)
 
 
-def common_predict(data_loader, model, device, train_sub=False):
+def common_predict(data_loader, model, device, train_sub=False, module_id=0):
     pred_pos, pred_list, y_list = [], [], []
-    
-    if train_sub: # train sub linear fc model
-        for i, (x, y) in enumerate(data_loader):
-            torch.cuda.empty_cache()
-            x = x.to(device)
-            output = model(x)
-            _, pred_y = torch.max(output, dim=1) # pos, pred_y
-            y = torch.tensor(y, dtype=torch.long)
-            # detach
-            x = x.detach().cpu()
-            pred_y = pred_y.detach().cpu()
-            output = output.detach().cpu()
 
-            pred_list.append(pred_y)
-            pred_pos.append(output)
-            y_list.append(y)
-            if IS_DEBUG and i >= DEBUG_NUM:
-                break
-        # print(f'pred_pos[0]: {pred_pos[0]}, pred_list[0]: {pred_list[0]}, y_list[0]: {y_list[0]}')
-    else:
-        model.to(device)
-        model.eval()
-        for i, ((sts, paths, eds), y, length) in enumerate(data_loader):
-            torch.cuda.empty_cache()
-            sts = sts.to(device)
-            paths = paths.to(device)
-            eds = eds.to(device)
-            y = torch.tensor(y, dtype=torch.long)
-            output = model(sts, paths, eds, length, device)
-
-            _, pred_y = torch.max(output, dim=1)
-            # detach
-            sts = sts.detach().cpu()
-            paths = paths.detach().cpu()
-            eds = eds.detach().cpu()
-
-            if isinstance(pred_y, tuple):
-                pred_y = (py.detach().cpu() for py in pred_y)
-            else:
+    with torch.no_grad():
+        if train_sub: # train sub linear fc model
+            for i, (x, y) in enumerate(data_loader):
+                torch.cuda.empty_cache()
+                x = x.to(device)
+                output = model(x)
+                _, pred_y = torch.max(output, dim=1) # pos, pred_y
+                y = torch.tensor(y, dtype=torch.long)
+                # detach
+                x = x.detach().cpu()
                 pred_y = pred_y.detach().cpu()
-
-            if isinstance(output, tuple):
-                output = (ot.detach().cpu() for ot in output)
-            else:
                 output = output.detach().cpu()
 
-            pred_list.append(pred_y)
-            pred_pos.append(output)
-            y_list.append(y)
+                pred_list.append(pred_y)
+                pred_pos.append(output)
+                y_list.append(y)
 
-            if IS_DEBUG and i >= DEBUG_NUM:
-                break
+                if IS_DEBUG and i >= DEBUG_NUM:
+                    break
+            
+        else:
+            model.to(device)
+            model.eval()
+
+            if module_id == 0: # code summary
+                for i, ((sts, paths, eds), y, length) in enumerate(data_loader):
+                    torch.cuda.empty_cache()
+                    sts = sts.to(device)
+                    paths = paths.to(device)
+                    eds = eds.to(device)
+                    y = torch.tensor(y, dtype=torch.long)
+                    output = model(sts, paths, eds, length, device)
+
+                    _, pred_y = torch.max(output, dim=1)
+                    # detach
+                    sts = sts.detach().cpu()
+                    paths = paths.detach().cpu()
+                    eds = eds.detach().cpu()
+                    pred_y = pred_y.detach().cpu()
+                    output = output.detach().cpu()
+
+                    pred_list.append(pred_y)
+                    pred_pos.append(output)
+                    y_list.append(y)
+
+                    if IS_DEBUG and i >= DEBUG_NUM:
+                        break
+            
+            elif module_id == 1: # code completion
+                for i, (input, y, _) in tqdm(enumerate(data_loader)):
+                    torch.cuda.empty_cache()
+                    input = input.to(device)
+                    # compute output
+                    output = model(input)
+                    _, pred_y = torch.max(output, dim=1)
+                    # detach
+                    input = input.detach().cpu()
+                    pred_y = pred_y.detach().cpu()
+                    output = output.detach().cpu()
+                
+                    # measure accuracy and record loss
+                    pred_list.append(pred_y)
+                    pred_pos.append(output)
+                    y_list.append(y.long())
+
+                    if IS_DEBUG and i >= DEBUG_NUM:
+                        break
+            else:
+                raise TypeError()
 
     return torch.cat(pred_pos, dim=0), torch.cat(pred_list, dim = 0), torch.cat(y_list, dim = 0)
 
@@ -178,10 +196,6 @@ def common_get_maxpos(pos : torch.Tensor):
 def common_get_entropy(pos : torch.Tensor):
     k = pos.size(-1)
     pred_prob = F.softmax(pos, dim=-1) # (N, k)
-    # print('prediction softmax probability: ', pred_prob)
-    # log_prob = pred_prob.log() # (N, k)
-    # print('prediction log softmax probability: ', log_prob)
-    # entropy = (-pred_prob * log_prob).sum(dim=1) # (N, )
     etp = entropy(pred_prob, axis=-1)/np.log(k) # np.ndarray
     return 1 - etp
 

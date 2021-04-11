@@ -93,12 +93,14 @@ if __name__ == '__main__':
     parser = ArgumentParser()
     parser.add_argument("-trd", "--train_data", dest="train_data_path",
                         help="path to training data file", required=True)
-    parser.add_argument("-ted1", "--test_data1", dest="test_data1_path",
-                        help="path to test data1 file", required=True)
-    parser.add_argument("-ted2", "--test_data2", dest="test_data2_path",
-                        help="path to test data2 file", required=True)
-    parser.add_argument("-ted3", "--test_data3", dest="test_data3_path",
-                        help="path to test data3 file", required=True)
+    # parser.add_argument("-ted1", "--test_data1", dest="test_data1_path",
+    #                     help="path to test data1 file", required=True)
+    # parser.add_argument("-ted2", "--test_data2", dest="test_data2_path",
+    #                     help="path to test data2 file", required=True)
+    # parser.add_argument("-ted3", "--test_data3", dest="test_data3_path",
+    #                     help="path to test data3 file", required=True)
+    parser.add_argument("-ted", "--test_data", dest="test_data_path",
+                        help="path to test data file", required=True)
     parser.add_argument("-vd", "--val_data", dest="val_data_path",
                         help="path to validation data file", required=True)
     parser.add_argument("-mc", "--max_contexts", dest="max_contexts", default=200,
@@ -121,9 +123,10 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     train_data_path = args.train_data_path
-    test_data1_path = args.test_data1_path
-    test_data2_path = args.test_data2_path
-    test_data3_path = args.test_data3_path
+    # test_data1_path = args.test_data1_path
+    # test_data2_path = args.test_data2_path
+    # test_data3_path = args.test_data3_path
+    test_data_path = args.test_data_path
     val_data_path = args.val_data_path
     word_histogram_path = args.word_histogram
     path_histogram_path = args.path_histogram
@@ -142,22 +145,25 @@ if __name__ == '__main__':
     num_training_examples = 0
     for data_file_path, data_role in zip(
         [
-            test_data1_path, 
-            test_data2_path, 
-            test_data3_path, 
+            # test_data1_path, 
+            # test_data2_path, 
+            # test_data3_path, 
+            test_data_path,
             val_data_path, 
             train_data_path
         ], 
         [
-            'test1',
-            'test2', 
-            'test3', 
+            # 'test1',
+            # 'test2', 
+            # 'test3', 
+            'test',
             'val', 
             'train'
         ]
     ):
-        num_examples = process_file(file_path=data_file_path, data_file_role=data_role, dataset_name=args.output_name,
-                                    word_to_count=word_to_count, path_to_count=path_to_count,
+        num_examples = process_file(file_path=data_file_path, data_file_role=data_role, 
+                                    dataset_name=args.output_name, word_to_count=word_to_count, 
+                                    path_to_count=path_to_count,
                                     max_contexts=int(args.max_contexts))
         if data_role == 'train':
             num_training_examples = num_examples

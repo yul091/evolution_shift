@@ -8,5 +8,8 @@ class Vanilla(BasicUncertainty):
         super(Vanilla, self).__init__(instance, device)
 
     def _uncertainty_calculate(self, data_loader):
-        pred_pos, _, _ = common_predict(data_loader, self.model, self.device)
+        pred_pos, _, _ = common_predict(
+            data_loader, self.model, self.device, 
+            module_id=self.module_id
+        )
         return common_get_maxpos(pred_pos)

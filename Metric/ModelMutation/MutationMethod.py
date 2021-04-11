@@ -28,7 +28,10 @@ class Mutation(BasicUncertainty):
 
     def _uncertainty_calculate(self, data_loader):
             score_list = []
-            _, orig_pred, _ = common_predict(data_loader, self.model, self.device)
+            _, orig_pred, _ = common_predict(
+                data_loader, self.model, self.device,
+                module_id=self.module_id
+            )
             orig_pred = common_ten2numpy(orig_pred)
             for op in self.op_list:
                 print(op.__class__.__name__)

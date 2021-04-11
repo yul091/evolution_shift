@@ -4,6 +4,7 @@ from .Cifar10 import CIFAR10_Module
 from .Cifar100 import CIFAR100_Module
 from .Fashion import Fashion_Module
 from .CodeSummary import CodeSummary_Module
+from .CodeCompletion import CodeCompletion_Module
 from .common_function import *
 
 
@@ -21,4 +22,5 @@ MODULE_LIST = [
     CIFAR100_Module,
     Android_Module,
     CodeSummary_Module,
+    CodeCompletion_Module,
 ]

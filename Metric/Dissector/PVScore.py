@@ -91,7 +91,7 @@ class PVScore(BasicUncertainty):
             optimizer = optim.SGD(linear.parameters(), lr=lr)
             data_loader = build_loader(sub_res, label, self.train_batch_size)
             linear.train()
-            for _ in tqdm(range(epoch)):
+            for _ in range(epoch):
                 for x, y in data_loader:
                     x = x.to(self.device)
                     y = y.to(self.device).view([-1])
@@ -106,8 +106,11 @@ class PVScore(BasicUncertainty):
                     pred = pred.detach().cpu()
 
             linear.eval()
-            print('linear model: ', linear)
-            _, pred_y, _ = common_predict(data_loader, linear, device=self.device, train_sub=True)
+            
+            _, pred_y, _ = common_predict(
+                data_loader, linear, device=self.device, train_sub=True,
+                module_id=self.module_id
+            )
             acc = common_cal_accuracy(pred_y, self.train_y)
             print('feature number for sub-model is', len(sub_res[0]), 'finish training the sub-model', sub_num[i],
                   'for ', self.instance.__class__.__name__, 'accuracy is', acc)
@@ -137,7 +140,10 @@ class PVScore(BasicUncertainty):
             linear_model.eval()
             hidden = sub_res_list[i]
             data_loader = build_loader(hidden, y, self.test_batch_size)
-            pred_pos, pred_y, _ = common_predict(data_loader, linear_model, self.device, train_sub=True)
+            pred_pos, pred_y, _ = common_predict(
+                data_loader, linear_model, self.device, train_sub=True, 
+                module_id=self.module_id
+            )
             res.append(pred_pos)
             print('test accuracy for', self.__class__.__name__, 'submodel ', sub_num[i], 'is', torch.sum(y.eq(pred_y), dtype=torch.float).item() / len(y))
         return res, sub_num
@@ -157,7 +163,10 @@ class PVScore(BasicUncertainty):
         print('Dissector uncertainty evaluation ...')
         weight_list = [0, 1, 2]
         result = []
-        _, pred_y, _ = common_predict(data_loader, self.model, self.device)
+        _, pred_y, _ = common_predict(
+            data_loader, self.model, self.device, 
+            module_id=self.module_id
+        )
         # pred_y = pred_y.to(self.device)
         svscore_list, sub_num = self.get_svscore(data_loader, pred_y)
         for weight in weight_list:

@@ -8,29 +8,37 @@ from BasicalClass.common_function import common_predict, common_ten2numpy
 class BasicModule:
     __metaclass__ = ABCMeta
 
-    def __init__(self, device, res_dir, save_dir, data_dir, load_poor):
-        self.tk_path = os.path.join(data_dir, 'tk.pkl')
-        self.train_path = os.path.join(data_dir, 'train.pkl')
-        self.shift1_path = os.path.join(data_dir, 'test1.pkl')
-        self.shift2_path = os.path.join(data_dir, 'test2.pkl')
-        self.shift3_path = os.path.join(data_dir, 'test3.pkl')
-        self.val_path = os.path.join(data_dir, 'val.pkl')
+    def __init__(self, device, res_dir, save_dir, data_dir, module_id, 
+                 train_batch_size, test_batch_size, max_size, load_poor=False):
+
+        if module_id == 0: # code summary
+            self.tk_path = os.path.join(data_dir, 'tk.pkl')
+            self.train_path = os.path.join(data_dir, 'train.pkl')
+            self.test_path = os.path.join(data_dir, 'test.pkl')
+            self.val_path = os.path.join(data_dir, 'val.pkl')
+        elif module_id == 1: # code completion
+            self.tk_path = None
+            self.train_path = os.path.join(data_dir, 'train.tsv')
+            self.test_path = os.path.join(data_dir, 'test.tsv')
+            self.val_path = os.path.join(data_dir, 'val.tsv')
+            self.min_samples = 5
+        else:
+            raise TypeError()
+        
+        self.module_id = module_id
         self.vec_path = 'java_dataset/embedding_vec/100_2/Doc2VecEmbedding0.vec'
         self.embed_dim = 100
         self.res_dir = res_dir
-        self.max_size = None # use 50000 of the data
+        self.max_size = max_size # use part of the data
         self.embed_type = 1
         self.device = device
         self.load_poor = load_poor
-        self.train_batch_size = 128
-        self.test_batch_size = self.train_batch_size
+        self.train_batch_size = train_batch_size
+        self.test_batch_size = test_batch_size
         self.model = self.get_model()
-        # self.class_num = 48557 # max target vocab size
         self.train_loader = None
         self.val_loader = None
-        self.shift1_loader = None
-        self.shift2_loader = None
-        self.shift3_loader = None
+        self.test_loader = None
         self.save_dir = save_dir
         
 
@@ -65,76 +73,71 @@ class BasicModule:
     def get_hiddenstate(self, dataloader, device):
         sub_num = self.model.sub_num
         hidden_res, label_res = [[] for _ in sub_num], []
-    
-        for (sts, paths, eds), y, length in dataloader:
-            sts = sts.to(device)
-            paths = paths.to(device)
-            eds = eds.to(device)
-            res = self.model.get_hidden(sts, paths, eds, length, device)
-            y = torch.tensor(y, dtype=torch.long) # convert tuple to tensor
-            # detach
-            sts = sts.detach().cpu()
-            paths = paths.detach().cpu()
-            eds = eds.detach().cpu()
-            res = [s.detach().cpu() for s in res]
 
-            for i, r in enumerate(res):
-                hidden_res[i].append(r)
-            label_res.append(y)
+        if self.module_id == 0: # code summary
+            for (sts, paths, eds), y, length in dataloader:
+                sts = sts.to(device)
+                paths = paths.to(device)
+                eds = eds.to(device)
+                res = self.model.get_hidden(sts, paths, eds, length, device)
+                y = torch.tensor(y, dtype=torch.long) # convert tuple to tensor
+                # detach
+                sts = sts.detach().cpu()
+                paths = paths.detach().cpu()
+                eds = eds.detach().cpu()
+                res = [s.detach().cpu() for s in res]
+
+                for i, r in enumerate(res):
+                    hidden_res[i].append(r)
+                label_res.append(y)
+
+        elif self.module_id == 1: # code completion
+            for input, y, _ in dataloader:
+                input = input.to(device)
+                res = self.model.get_hidden(input)
+
+                # detach
+                input = input.detach().cpu()
+                res = [s.detach().cpu() for s in res]
+            
+                for i, r in enumerate(res):
+                    hidden_res[i].append(r)
+                label_res.append(y.long())
+
+        else:
+            raise TypeError()
 
         hidden_res = [torch.cat(tmp, dim=0) for tmp in hidden_res]
-
         return hidden_res, sub_num, torch.cat(label_res)
 
-    # def get_loader(self, train_db, val_db, test_db ):
-    #     train_loader = DataLoader(
-    #         train_db, batch_size=self.train_batch_size,
-    #         shuffle=False, collate_fn=None)
-    #     val_loader = DataLoader(
-    #         val_db, batch_size=self.test_batch_size,
-    #         shuffle=False, collate_fn=None)
-    #     test_loader = DataLoader(
-    #         test_db, batch_size=self.test_batch_size,
-    #         shuffle=False, collate_fn=None)
-    #     return train_loader, val_loader, test_loader
 
     def get_information(self):
         self.train_pred_pos, self.train_pred_y, self.train_y = \
-            common_predict(self.train_loader, self.model, self.device)
+            common_predict(self.train_loader, self.model, self.device, module_id=self.module_id)
 
         self.val_pred_pos, self.val_pred_y, self.val_y = \
-            common_predict(self.val_loader, self.model, self.device)
+            common_predict(self.val_loader, self.model, self.device, module_id=self.module_id)
 
-        self.shift1_pred_pos, self.shift1_pred_y, self.shift1_y = \
-            common_predict(self.shift1_loader, self.model, self.device)
+        self.test_pred_pos, self.test_pred_y, self.test_y = \
+            common_predict(self.test_loader, self.model, self.device, module_id=self.module_id)
 
-        self.shift2_pred_pos, self.shift2_pred_y, self.shift2_y = \
-            common_predict(self.shift2_loader, self.model, self.device)
-
-        self.shift3_pred_pos, self.shift3_pred_y, self.shift3_y = \
-            common_predict(self.shift3_loader, self.model, self.device)
-
-        print(
-            'train class num: {}, val class num: {}, shift1 class num: {}, shift2 class num: {}, shift3 class num: {}'.format(
-                self.train_pred_pos.size(1), self.val_pred_pos.size(1), 
-                self.shift1_pred_pos.size(1), self.shift2_pred_pos.size(1), 
-                self.shift3_pred_pos.size(1)
-            )
-        )
         self.class_num = self.train_pred_pos.size(1) # setting the class_num
+        print(
+            'train class num: {}, val class num: {}, test class num: {}'.format(
+                self.train_pred_pos.size(1), 
+                self.val_pred_pos.size(1), 
+                self.test_pred_pos.size(1),
+            ))
+        
 
     def save_truth(self):
         self.train_truth = self.train_pred_y.eq(self.train_y)
         self.val_truth = self.val_pred_y.eq(self.val_y)
-        self.shift1_truth = self.shift1_pred_y.eq(self.shift1_y)
-        self.shift2_truth = self.shift2_pred_y.eq(self.shift2_y)
-        self.shift3_truth = self.shift3_pred_y.eq(self.shift3_y)
+        self.test_truth = self.test_pred_y.eq(self.test_y)
         truth = {
             'train': common_ten2numpy(self.train_truth), # torch to numpy cpu
             'val': common_ten2numpy(self.val_truth),
-            'shift1': common_ten2numpy(self.shift1_truth),
-            'shift2': common_ten2numpy(self.shift2_truth),
-            'shift3': common_ten2numpy(self.shift3_truth),
+            'test': common_ten2numpy(self.test_truth),
         }
         torch.save(
             truth, 

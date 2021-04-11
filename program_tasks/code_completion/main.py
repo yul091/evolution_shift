@@ -1,5 +1,4 @@
 from __future__ import print_function
-
 import gc
 import os
 import argparse
@@ -10,7 +9,6 @@ import torch
 from torch import nn
 # import torch.backends.cudnn as cudnn
 from gensim.models import word2vec
-
 from preprocess.checkpoint import Checkpoint
 from program_tasks.code_completion.vocab import VocabBuilder
 from program_tasks.code_completion.dataloader import Word2vecLoader
@@ -23,9 +21,10 @@ def preprocess_data():
     print("===> creating vocabs ...")
     train_path = args.train_data
     val_path = args.val_data
-    test_path1 = args.test_data1
-    test_path2 = args.test_data2
-    test_path3 = args.test_data3
+    test_path = args.test_data
+    # test_path1 = args.test_data1
+    # test_path2 = args.test_data2
+    # test_path3 = args.test_data3
 
     pre_embedding_path = args.embedding_path
     if args.embedding_type == 0:
@@ -53,12 +52,12 @@ def preprocess_data():
 
     train_loader = Word2vecLoader(train_path, d_word_index, batch_size=args.batch_size)
     val_loader = Word2vecLoader(val_path, d_word_index, batch_size=args.batch_size)
-    val_loader1 = Word2vecLoader(test_path1, d_word_index, batch_size=args.batch_size)
-    val_loader2 = Word2vecLoader(test_path2, d_word_index, batch_size=args.batch_size)
-    val_loader3 = Word2vecLoader(test_path3, d_word_index, batch_size=args.batch_size)
+    test_loader = Word2vecLoader(test_path, d_word_index, batch_size=args.batch_size)
+    # val_loader1 = Word2vecLoader(test_path1, d_word_index, batch_size=args.batch_size)
+    # val_loader2 = Word2vecLoader(test_path2, d_word_index, batch_size=args.batch_size)
+    # val_loader3 = Word2vecLoader(test_path3, d_word_index, batch_size=args.batch_size)
 
-    return d_word_index, embed, train_loader, val_loader, \
-        val_loader1, val_loader2, val_loader3
+    return d_word_index, embed, train_loader, val_loader, test_loader
 
 
 def train(train_loader, model, criterion, optimizer):
@@ -109,8 +108,7 @@ def test(val_loader, model, criterion, val_name):
 
 
 def main(args):
-    d_word_index, embed, train_loader, val_loader, \
-        val_loader1, val_loader2, val_loader3 = preprocess_data()
+    d_word_index, embed, train_loader, val_loader, test_loader = preprocess_data()
     vocab_size = len(d_word_index)
     print('vocab_size is', vocab_size)
 
@@ -148,16 +146,17 @@ def main(args):
             time_cost += (ed - st)
 
         print(epoch, 'cost time', ed - st)
-        res1 = test(val_loader1, model, criterion, 'test1')
-        res2 = test(val_loader2, model, criterion, 'test2')
-        res3 = test(val_loader3, model, criterion, 'test3')
-        res4 = test(val_loader, model, criterion, 'val')
-        merge_res = {**res4, **res1, **res2, **res3} # merge all the test results
+        # res1 = test(val_loader1, model, criterion, 'test1')
+        # res2 = test(val_loader2, model, criterion, 'test2')
+        # res3 = test(val_loader3, model, criterion, 'test3')
+        res_test = test(test_loader, model, criterion, 'test')
+        res_val = test(val_loader, model, criterion, 'val')
+        merge_res = {**res_val, **res_test} # merge all the test results
 
         # save model checkpoint
-        if res1['test1 acc'] > best_val_acc:
+        if res_val['val acc'] > best_val_acc:
             Checkpoint(model, optimizer, epoch, merge_res).save(args.res_dir)
-            best_val_acc = res1['test1 acc']
+            best_val_acc = res_val['val acc']
 
 
     print('time cost', time_cost / args.epochs)
@@ -165,7 +164,7 @@ def main(args):
 
     weight_save_model = os.path.join('program_tasks/code_completion', args.weight_name)
     torch.save(model.encoder.weight, weight_save_model)
-    print('result is ', res1, res2, res3)
+    # print('result is ', res1, res2, res3)
     print('cost time', t2 - t1)
 
 
@@ -189,13 +188,14 @@ if __name__ == '__main__':
     parser.add_argument('--embedding_path', type=str, default='embedding_vec100_1/fasttext.vec')
     parser.add_argument('--train_data', type=str, default='program_tasks/code_completion/dataset/train.tsv',)
     parser.add_argument('--val_data', type=str, default='program_tasks/code_completion/dataset/val.tsv', help='model name')
-    parser.add_argument('--test_data1', type=str, default='program_tasks/code_completion/dataset/test1.tsv', help='model name')
-    parser.add_argument('--test_data2', type=str, default='program_tasks/code_completion/dataset/test2.tsv', help='model name')
-    parser.add_argument('--test_data3', type=str, default='program_tasks/code_completion/dataset/test3.tsv', help='model name')
+    parser.add_argument('--test_data', type=str, default='program_tasks/code_completion/dataset/test.tsv', help='model name')
+    # parser.add_argument('--test_data1', type=str, default='program_tasks/code_completion/dataset/test1.tsv', help='model name')
+    # parser.add_argument('--test_data2', type=str, default='program_tasks/code_completion/dataset/test2.tsv', help='model name')
+    # parser.add_argument('--test_data3', type=str, default='program_tasks/code_completion/dataset/test3.tsv', help='model name')
     parser.add_argument('--embedding_type', type=int, default=1, choices=[0, 1, 2])
     parser.add_argument('--experiment_name', type=str, default='code_completion')
     parser.add_argument('--res_dir', type=str, default='program_tasks/code_completion/result/')
     parser.add_argument('--load_ckpt', default=False, action='store_true', help='use pretrained model')
-
     args = parser.parse_args()
+
     main(args)

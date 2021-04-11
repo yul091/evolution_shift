@@ -121,13 +121,18 @@ class TextClassDataLoader(object):
 
 class Word2vecLoader(object):
 
-    def __init__(self, path_file, word_to_index, batch_size=32):
+    def __init__(self, path_file, word_to_index, batch_size=32, max_size=None):
 
         self.batch_size = batch_size
         self.word_to_index = word_to_index
 
         # read file
         df = pd.read_csv(path_file, delimiter='\t')
+        # random sample some data to reproduce
+        if max_size is not None:
+            size = min(len(df), max_size)
+            df = df.sample(n=size)
+
         df['body'] = df['body'].apply(ut._tokenize)
         self.old_samples = df['body'].copy()
         df['body'] = df['body'].apply(self.generate_indexifyer())
