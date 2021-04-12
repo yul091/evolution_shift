@@ -21,10 +21,10 @@ def preprocess_data():
     print("===> creating vocabs ...")
     train_path = args.train_data
     val_path = args.val_data
-    test_path = args.test_data
-    # test_path1 = args.test_data1
-    # test_path2 = args.test_data2
-    # test_path3 = args.test_data3
+    # test_path = args.test_data
+    test_path1 = args.test_data1
+    test_path2 = args.test_data2
+    test_path3 = args.test_data3
 
     pre_embedding_path = args.embedding_path
     if args.embedding_type == 0:
@@ -52,12 +52,13 @@ def preprocess_data():
 
     train_loader = Word2vecLoader(train_path, d_word_index, batch_size=args.batch_size)
     val_loader = Word2vecLoader(val_path, d_word_index, batch_size=args.batch_size)
-    test_loader = Word2vecLoader(test_path, d_word_index, batch_size=args.batch_size)
-    # val_loader1 = Word2vecLoader(test_path1, d_word_index, batch_size=args.batch_size)
-    # val_loader2 = Word2vecLoader(test_path2, d_word_index, batch_size=args.batch_size)
-    # val_loader3 = Word2vecLoader(test_path3, d_word_index, batch_size=args.batch_size)
+    # test_loader = Word2vecLoader(test_path, d_word_index, batch_size=args.batch_size)
+    val_loader1 = Word2vecLoader(test_path1, d_word_index, batch_size=args.batch_size)
+    val_loader2 = Word2vecLoader(test_path2, d_word_index, batch_size=args.batch_size)
+    val_loader3 = Word2vecLoader(test_path3, d_word_index, batch_size=args.batch_size)
 
-    return d_word_index, embed, train_loader, val_loader, test_loader
+    return d_word_index, embed, train_loader, val_loader, \
+        val_loader1, val_loader2, val_loader3
 
 
 def train(train_loader, model, criterion, optimizer):
@@ -108,7 +109,8 @@ def test(val_loader, model, criterion, val_name):
 
 
 def main(args):
-    d_word_index, embed, train_loader, val_loader, test_loader = preprocess_data()
+    d_word_index, embed, train_loader, val_loader, \
+        test_loader1, test_loader2, test_loader3 = preprocess_data()
     vocab_size = len(d_word_index)
     print('vocab_size is', vocab_size)
 
@@ -146,12 +148,12 @@ def main(args):
             time_cost += (ed - st)
 
         print(epoch, 'cost time', ed - st)
-        # res1 = test(val_loader1, model, criterion, 'test1')
-        # res2 = test(val_loader2, model, criterion, 'test2')
-        # res3 = test(val_loader3, model, criterion, 'test3')
-        res_test = test(test_loader, model, criterion, 'test')
+        res1 = test(test_loader1, model, criterion, 'test1')
+        res2 = test(test_loader2, model, criterion, 'test2')
+        res3 = test(test_loader3, model, criterion, 'test3')
+        # res_test = test(test_loader, model, criterion, 'test')
         res_val = test(val_loader, model, criterion, 'val')
-        merge_res = {**res_val, **res_test} # merge all the test results
+        merge_res = {**res_val, **res1, **res2, **res3} # merge all the test results
 
         # save model checkpoint
         if res_val['val acc'] > best_val_acc:
@@ -188,10 +190,10 @@ if __name__ == '__main__':
     parser.add_argument('--embedding_path', type=str, default='embedding_vec100_1/fasttext.vec')
     parser.add_argument('--train_data', type=str, default='program_tasks/code_completion/dataset/train.tsv',)
     parser.add_argument('--val_data', type=str, default='program_tasks/code_completion/dataset/val.tsv', help='model name')
-    parser.add_argument('--test_data', type=str, default='program_tasks/code_completion/dataset/test.tsv', help='model name')
-    # parser.add_argument('--test_data1', type=str, default='program_tasks/code_completion/dataset/test1.tsv', help='model name')
-    # parser.add_argument('--test_data2', type=str, default='program_tasks/code_completion/dataset/test2.tsv', help='model name')
-    # parser.add_argument('--test_data3', type=str, default='program_tasks/code_completion/dataset/test3.tsv', help='model name')
+    # parser.add_argument('--test_data', type=str, default='program_tasks/code_completion/dataset/test.tsv', help='model name')
+    parser.add_argument('--test_data1', type=str, default='program_tasks/code_completion/dataset/test1.tsv', help='model name')
+    parser.add_argument('--test_data2', type=str, default='program_tasks/code_completion/dataset/test2.tsv', help='model name')
+    parser.add_argument('--test_data3', type=str, default='program_tasks/code_completion/dataset/test3.tsv', help='model name')
     parser.add_argument('--embedding_type', type=int, default=1, choices=[0, 1, 2])
     parser.add_argument('--experiment_name', type=str, default='code_completion')
     parser.add_argument('--res_dir', type=str, default='program_tasks/code_completion/result/')

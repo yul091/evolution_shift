@@ -6,10 +6,10 @@
 # RES_DIR=program_tasks/code_summary/result/different_project/$PROJECT
 
 MODULE_ID=1 # 1 is code completion
-PROJECT=java_project1
+PROJECT=java_project2
 DATA_DIR=program_tasks/code_completion/dataset/different_project/$PROJECT
 RES_DIR=program_tasks/code_completion/result/different_project/$PROJECT
-MAX_SIZE=1000
+MAX_SIZE=500
 
 
 SAVE_DIR=Uncertainty_Results/different_project/$PROJECT
@@ -20,10 +20,10 @@ else
   echo dir exist
 fi
 
-TRAIN_BATCH_SIZE=128
-TEST_BATCH_SIZE=128
+TRAIN_BATCH_SIZE=64
+TEST_BATCH_SIZE=64
 
-CUDA_VISIBLE_DEVICES=3 python -m Metric.test_uncertainty \
+CUDA_VISIBLE_DEVICES=6 python -m Metric.test_uncertainty \
 --module_id=$MODULE_ID --res_dir=$RES_DIR \
 --data_dir=$DATA_DIR --save_dir=$SAVE_DIR \
 --train_batch_size=$TRAIN_BATCH_SIZE --test_batch_size=$TEST_BATCH_SIZE \

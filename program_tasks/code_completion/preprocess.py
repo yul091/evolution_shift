@@ -75,44 +75,63 @@ def parse_java(src_folder, dest_dir, dest_file_name):
 if __name__ == '__main__':
     # from preprocess.train_split import JAVA_PROJECTS
 
-    data_dir = "java_data/different_project/data"
+    # data_dir = "java_data/different_project/data"
+    # java_dict = {
+    #     'java_project1': {
+    #         'train': os.path.join(data_dir, 'hibernate-orm', 'train'),
+    #         'val': os.path.join(data_dir, 'hibernate-orm', 'val'),
+    #         'test': os.path.join(data_dir, 'hadoop', 'val'),
+    #     },
+    #     'java_project2': {
+    #         'train': os.path.join(data_dir, 'presto', 'train'),
+    #         'val': os.path.join(data_dir, 'presto', 'val'),
+    #         'test': os.path.join(data_dir, 'elasticsearch', 'val'),
+    #     },
+    #     'java_project3': {
+    #         'train': os.path.join(data_dir, 'spring-framework', 'train'),
+    #         'val': os.path.join(data_dir, 'spring-framework', 'val'),
+    #         'test': os.path.join(data_dir, 'gradle', 'val'),
+    #     },
+    # }
+
+    # for project in java_dict:
+
+    #     dest_dir = "program_tasks/code_completion/dataset/different_project/"+project
+    #     src_fn_dict = {
+    #         'test.txt': java_dict[project]['test'],
+    #         'val.txt': java_dict[project]['val'],
+    #         'train.txt': java_dict[project]['train'],
+    #     }
+        
+    #     if not os.path.exists(dest_dir):
+    #         os.makedirs(dest_dir)
+
+    #     for name, src in src_fn_dict.items():
+    #         parse_java(src, dest_dir, name)
+
+    #     for name in src_fn_dict:
+    #         origin_file = os.path.join(dest_dir, name)
+    #         dest_file = origin_file.rstrip('.txt') + '.tsv'
+    #         create_tsv_file(origin_file, dest_file)
+
+    project = 'elasticsearch'
+    data_dir = 'java_data/different_author/' + project + '/data'
+    data_type = ['train', 'val', 'test1', 'test2', 'test3']
     java_dict = {
-        'java_project1': {
-            'train': os.path.join(data_dir, 'hibernate-orm', 'train'),
-            'val': os.path.join(data_dir, 'hibernate-orm', 'val'),
-            'test': os.path.join(data_dir, 'hadoop', 'val'),
-        },
-        'java_project2': {
-            'train': os.path.join(data_dir, 'presto', 'train'),
-            'val': os.path.join(data_dir, 'presto', 'val'),
-            'test': os.path.join(data_dir, 'elasticsearch', 'val'),
-        },
-        'java_project3': {
-            'train': os.path.join(data_dir, 'spring-framework', 'train'),
-            'val': os.path.join(data_dir, 'spring-framework', 'val'),
-            'test': os.path.join(data_dir, 'gradle', 'val'),
-        },
+        k + '.txt': os.path.join(data_dir, k) # 'train': data_dir/train/
+        for k in data_type
     }
 
-    for project in java_dict:
+    dest_dir = "program_tasks/code_completion/dataset/different_author/" + project
 
-        dest_dir = "program_tasks/code_completion/dataset/different_project/"+project
-        src_fn_dict = {
-            'test.txt': java_dict[project]['test'],
-            'val.txt': java_dict[project]['val'],
-            'train.txt': java_dict[project]['train'],
-        }
-        
-        if not os.path.exists(dest_dir):
-            os.makedirs(dest_dir)
+    if not os.path.exists(dest_dir):
+        os.makedirs(dest_dir)
 
-        for name, src in src_fn_dict.items():
-            parse_java(src, dest_dir, name)
+    for name, src in java_dict.items():
+        parse_java(src, dest_dir, name)
 
-        for name in src_fn_dict:
-            origin_file = os.path.join(dest_dir, name)
-            dest_file = origin_file.rstrip('.txt') + '.tsv'
-            create_tsv_file(origin_file, dest_file)
-
-    
+    for name in java_dict:
+        origin_file = os.path.join(dest_dir, name)
+        dest_file = origin_file.rstrip('.txt') + '.tsv'
+        create_tsv_file(origin_file, dest_file)
     

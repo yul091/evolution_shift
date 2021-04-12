@@ -218,15 +218,17 @@ class Uncertainty_Eval():
 
 if __name__ == "__main__":
     # from preprocess.train_split import JAVA_PROJECTS
+    # projects = ['java_project1', 'java_project2', 'java_project3']
 
-    # eval_m = Uncertainty_Eval(
-    #     res_dir='Uncertainty_Results', projects=JAVA_PROJECTS, 
-    #     save_dir='Uncertainty_Eval/java', task='CodeSummary_Module'
-    # )
+    # for project in projects:
+    #     eval_m = Uncertainty_Eval(
+    #         res_dir='Uncertainty_Results/different_project', projects=project, 
+    #         save_dir='Uncertainty_Eval/different_project/'+project, task='CodeCompletion_Module'
+    #     )
+    #     eval_m.evaluation()
+
     eval_m = Uncertainty_Eval(
-        res_dir='Uncertainty_Results/different_project', projects='java_project2', 
-        save_dir='Uncertainty_Eval/different_project/java_project2', task='CodeSummary_Module'
+        res_dir='Uncertainty_Results/different_project', projects='java_project3', 
+        save_dir='Uncertainty_Eval/different_project/java_project3', task='CodeCompletion_Module'
     )
     eval_m.evaluation()
-
-

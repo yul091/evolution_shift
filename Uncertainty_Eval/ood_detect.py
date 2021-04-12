@@ -64,8 +64,11 @@ if __name__ == "__main__":
     #     save_dir='Uncertainty_Eval/java', task='CodeSummary_Module'
     # )
     eval_m = OODdetect(
-        res_dir='Uncertainty_Results/different_project', projects='java_project3', 
-        save_dir='Uncertainty_Eval/different_project/java_project3', task='CodeSummary_Module'
+        res_dir='Uncertainty_Results/different_project', 
+        projects='java_project3', 
+        save_dir='Uncertainty_Eval/different_project/java_project3', 
+        # task='CodeSummary_Module'
+        task='CodeCompletion_Module',
     )
     eval_m.evaluate()
         

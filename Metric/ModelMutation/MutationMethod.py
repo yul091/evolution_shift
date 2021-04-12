@@ -35,7 +35,7 @@ class Mutation(BasicUncertainty):
             orig_pred = common_ten2numpy(orig_pred)
             for op in self.op_list:
                 print(op.__class__.__name__)
-                mutation_matrix = op.run(data_loader, iter_time=self.iter_time)
+                mutation_matrix = op.run(data_loader, iter_time=self.iter_time, module_id=self.module_id)
                 score = self.label_chgrate(orig_pred, mutation_matrix)
                 score_list.append(score)
             return score_list

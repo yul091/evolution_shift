@@ -68,17 +68,20 @@ def main(DATA_DIR, DIR):
     build_dict(dataset)
     norm_data('train')
     norm_data('val')
-    norm_data('test')
+    # norm_data('test')
+    norm_data('test1')
+    norm_data('test2')
+    norm_data('test3')
 
 
 if __name__ == '__main__':
     file_dict = {
-        'java_project1': 'java_pkl1',
-        'java_project2': 'java_pkl2',
-        'java_project3': 'java_pkl3',
+        'elasticsearch': 'java_pkl',
+        # 'java_project2': 'java_pkl2',
+        # 'java_project3': 'java_pkl3',
     }
     for FILENAME, GEN_FILE in file_dict.items():
-        TRG_DIR = 'java_data/different_project'
+        TRG_DIR = 'java_data/different_author/elasticsearch'
         DIR = os.path.join(TRG_DIR, GEN_FILE)
         DATA_DIR = os.path.join(TRG_DIR, FILENAME)
         main(DATA_DIR, DIR)

@@ -22,13 +22,14 @@ class BasicMutation:
     def get_mutate_model(self):
         return None, None
 
-    def run(self, data_loader, iter_time):
+    def run(self, data_loader, iter_time, module_id):
         res = []
         while len(res) <= iter_time:
             print('this is the %d model' % (len(res)))
             mutate_model, is_fail = self.get_mutate_model()
             if not is_fail:
-                _, pred_y, _ = common_predict(data_loader, mutate_model, self.device)
+                _, pred_y, _ = common_predict(data_loader, mutate_model, self.device, 
+                                              module_id=module_id)
                 res.append(common_ten2numpy(pred_y).reshape([-1, 1]))
         return np.concatenate(res, axis=1)
 

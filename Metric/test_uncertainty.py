@@ -1,12 +1,9 @@
 from torch.nn.modules import module
 from Metric import *
-from BasicalClass import Fashion_Module, CIFAR10_Module, CodeSummary_Module, CodeCompletion_Module
+from BasicalClass import CodeSummary_Module, CodeCompletion_Module
 import torch
 from BasicalClass import common_get_auc
 import argparse
-
-# device = torch.device("cuda:2" if torch.cuda.is_available() else "cpu")
-# module_instance = CIFAR10_Module(device=device)
 
 
 if __name__ == '__main__':
@@ -28,17 +25,15 @@ if __name__ == '__main__':
     ModuleList = [
         CodeSummary_Module,
         CodeCompletion_Module,
-        # Fashion_Module,
-        # CIFAR10_Module,
     ]
     MetricList = [
-        # Vanilla,
-        # ModelWithTemperature,
+        Vanilla,
+        ModelWithTemperature,
         PVScore,
-        # Mahalanobis,
         ModelActivateDropout,
         Entropy,
         Mutation,
+        # Mahalanobis,
     ]
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
