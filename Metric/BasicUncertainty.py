@@ -20,37 +20,67 @@ class BasicUncertainty(nn.Module):
         self.class_num = instance.class_num
         self.save_dir = instance.save_dir
         self.module_id = instance.module_id
+        self.softmax = nn.Softmax(dim=1)
+        self.test_path = instance.test_path
 
-        self.train_y, self.val_y, self.test_y = \
-            instance.train_y, instance.val_y, instance.test_y
+        self.train_y, self.val_y = instance.train_y, instance.val_y
         self.train_pred_pos, self.train_pred_y =\
             instance.train_pred_pos, instance.train_pred_y
-        self.val_pred_pos, self.val_pred_y = \
-            instance.val_pred_pos, instance.val_pred_y
-        self.test_pred_pos, self.test_pred_y = \
-            instance.test_pred_pos, instance.test_pred_y
-        
         self.train_loader = instance.train_loader
-        self.val_loader = instance.val_loader
-        self.test_loader = instance.test_loader
-
         self.train_num = len(self.train_y)
-        self.val_num = len(self.val_y)
-        self.test_num = len(self.test_y)
-        
         self.train_oracle = np.int32(
             common_ten2numpy(self.train_pred_y).reshape([-1]) == \
                 common_ten2numpy(self.train_y).reshape([-1])
         )
+
+        self.val_pred_pos, self.val_pred_y = \
+            instance.val_pred_pos, instance.val_pred_y
+        self.val_loader = instance.val_loader
+        self.val_num = len(self.val_y)
         self.val_oracle = np.int32(
             common_ten2numpy(self.val_pred_y).reshape([-1]) == \
                 common_ten2numpy(self.val_y).reshape([-1])
         )
-        self.test_oracle = np.int32(
-            common_ten2numpy(self.test_pred_y).reshape([-1]) == \
-                common_ten2numpy(self.test_y).reshape([-1])
-        )
-        self.softmax = nn.Softmax(dim=1)
+
+        if self.test_path is not None:
+            self.test_y = instance.test_y
+            self.test_pred_pos, self.test_pred_y = \
+                instance.test_pred_pos, instance.test_pred_y
+            self.test_loader = instance.test_loader
+            self.test_num = len(self.test_y)
+            self.test_oracle = np.int32(
+                common_ten2numpy(self.test_pred_y).reshape([-1]) == \
+                    common_ten2numpy(self.test_y).reshape([-1])
+            )
+            
+        else:
+            self.test_y1, self.test_y2, self.test_y3 = \
+                instance.test_y1, instance.test_y2, instance.test_y3
+            self.test_pred_pos1, self.test_pred_y1 = \
+                instance.test_pred_pos1, instance.test_pred_y1
+            self.test_loader1 = instance.test_loader1
+            self.test_num1 = len(self.test_y1)
+            self.test_oracle1 = np.int32(
+                common_ten2numpy(self.test_pred_y1).reshape([-1]) == \
+                    common_ten2numpy(self.test_y1).reshape([-1])
+            )
+            self.test_pred_pos2, self.test_pred_y2 = \
+                instance.test_pred_pos2, instance.test_pred_y2
+            self.test_loader2 = instance.test_loader2
+            self.test_num2 = len(self.test_y2)
+            self.test_oracle2 = np.int32(
+                common_ten2numpy(self.test_pred_y2).reshape([-1]) == \
+                    common_ten2numpy(self.test_y2).reshape([-1])
+            )
+            self.test_pred_pos3, self.test_pred_y3 = \
+                instance.test_pred_pos3, instance.test_pred_y3
+            self.test_loader3 = instance.test_loader3
+            self.test_num3 = len(self.test_y3)
+            self.test_oracle3 = np.int32(
+                common_ten2numpy(self.test_pred_y3).reshape([-1]) == \
+                    common_ten2numpy(self.test_y3).reshape([-1])
+            )
+            
 
     @abstractmethod
     def _uncertainty_calculate(self, data_loader):
@@ -65,13 +95,24 @@ class BasicUncertainty(nn.Module):
     def get_uncertainty(self):
         train_score = self._uncertainty_calculate(self.train_loader)
         val_score = self._uncertainty_calculate(self.val_loader)
-        test_score = self._uncertainty_calculate(self.test_loader)
-
-        result = {
-            'train': train_score,
-            'val': val_score,
-            'test': test_score,
-        }
+        if self.test_path is not None:
+            test_score = self._uncertainty_calculate(self.test_loader)
+            result = {
+                'train': train_score,
+                'val': val_score,
+                'test': test_score,
+            }
+        else:
+            test_score1 = self._uncertainty_calculate(self.test_loader1)
+            test_score2 = self._uncertainty_calculate(self.test_loader2)
+            test_score3 = self._uncertainty_calculate(self.test_loader3)
+            result = {
+                'train': train_score,
+                'val': val_score,
+                'test1': test_score1,
+                'test2': test_score2,
+                'test3': test_score3,
+            }
         return result
 
     def save_uncertaity_file(self, score_dict):

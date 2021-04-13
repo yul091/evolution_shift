@@ -8,7 +8,7 @@ from sklearn.metrics import roc_curve, auc, average_precision_score, brier_score
 
 
 class Uncertainty_Eval():
-    def __init__(self, res_dir, projects, save_dir, task='CodeSummary_Module'):
+    def __init__(self, res_dir, projects, save_dir, task='CodeSummary_Module', shift=False):
         """
         res_dir (str): path of uncertainty result, Default: "Uncertainty_Results".
         projects (list): list of project names like [gradle, elasticsearch, etc.]
@@ -19,6 +19,7 @@ class Uncertainty_Eval():
         self.projects = projects
         self.task = task
         self.save_dir = save_dir
+        self.shift = shift
         
     def common_get_auc(self, y_test, y_score, name=None):
         fpr, tpr, threshold = roc_curve(y_test, y_score)  # calculate true positive & false positive
@@ -155,10 +156,11 @@ class Uncertainty_Eval():
             trg_dir = os.path.join(self.res_dir, project, self.task)
             truth = torch.load(os.path.join(trg_dir,'truth.res'))
             uncertainty_res = [f for f in os.listdir(trg_dir) if f.endswith('.res') and f != 'truth.res']
-            # print(uncertainty_res)
-            print('train_acc: %.4f, val_acc: %.4f, test_acc: %.4f' % (
-                np.mean(truth['train']), np.mean(truth['val']), np.mean(truth['test'])
-            ))
+            
+            if not self.shift:
+                print('train_acc: %.4f, val_acc: %.4f, test_acc: %.4f' % (
+                    np.mean(truth['train']), np.mean(truth['val']), np.mean(truth['test'])
+                ))
             for metric in uncertainty_res:
                 metric_res = torch.load(os.path.join(trg_dir, metric))
                 metric_name = metric[:-4] # get rid of endswith '.res'
@@ -167,46 +169,141 @@ class Uncertainty_Eval():
                 if metric_name not in ['Mutation', 'PVScore']:
                     # average uncertainty
                     mU_val = np.mean(metric_res['val'])
-                    mU_test = np.mean(metric_res['test'])
-                    print('%s: \nmUncertainty: val: %.4f, test: %.4f' % (
-                        metric_name, mU_val, mU_test
-                    ))
+
+                    if not self.shift:
+                        mU_test = np.mean(metric_res['test'])
+                        print('%s: \nmUncertainty: val: %.4f, test: %.4f' % (
+                            metric_name, mU_val, mU_test
+                        ))
+                    else:
+                        mU_test1 = np.mean(metric_res['test1'])
+                        mU_test2 = np.mean(metric_res['test2'])
+                        mU_test3 = np.mean(metric_res['test3'])
+                        print('%s: \nmUncertainty: val: %.4f, test1: %.4f, test2: %.4f, test3: %.4f' % (
+                            metric_name, mU_val, mU_test1, mU_test2, mU_test3
+                        ))
                     # AUC
                     AUC_val = self.common_get_auc(truth['val'], metric_res['val'])
-                    AUC_test = self.common_get_auc(truth['test'], metric_res['test'])
-                    print('AUC: val: %.4f, test: %.4f' % (AUC_val, AUC_test))
+
+                    if not self.shift:
+                        AUC_test = self.common_get_auc(truth['test'], metric_res['test'])
+                        print('AUC: val: %.4f, test: %.4f' % (AUC_val, AUC_test))
+                    else:
+                        AUC_test1 = self.common_get_auc(truth['test1'], metric_res['test1'])
+                        AUC_test2 = self.common_get_auc(truth['test2'], metric_res['test2'])
+                        AUC_test3 = self.common_get_auc(truth['test3'], metric_res['test3'])
+                        print('AUC: val: %.4f, test1: %.4f, test2: %.4f, test3: %.4f' % (
+                            AUC_val, AUC_test1, AUC_test2, AUC_test3
+                        ))
+
                     # AUPR
                     AUPR_val = self.common_get_aupr(truth['val'], metric_res['val'])
-                    AUPR_test = self.common_get_aupr(truth['test'], metric_res['test'])
-                    print('AUPR: val: %.4f, test: %.4f' % (AUPR_val, AUPR_test))
+
+                    if not self.shift:
+                        AUPR_test = self.common_get_aupr(truth['test'], metric_res['test'])
+                        print('AUPR: val: %.4f, test: %.4f' % (AUPR_val, AUPR_test))
+                    else:
+                        AUPR_test1 = self.common_get_aupr(truth['test1'], metric_res['test1'])
+                        AUPR_test2 = self.common_get_aupr(truth['test2'], metric_res['test2'])
+                        AUPR_test3 = self.common_get_aupr(truth['test3'], metric_res['test3'])
+                        print('AUPR: val: %.4f, test1: %.4f, test2: %.4f, test3: %.4f' % (
+                            AUPR_val, AUPR_test1, AUPR_test2, AUPR_test3
+                        ))
+
                     # Brier score
                     Brier_val = self.common_get_brier(truth['val'], metric_res['val'])
-                    Brier_test = self.common_get_brier(truth['test'], metric_res['test'])
-                    print('Brier: val: %.4f, test: %.4f' % (Brier_val, Brier_test))
+
+                    if not self.shift:
+                        Brier_test = self.common_get_brier(truth['test'], metric_res['test'])
+                        print('Brier: val: %.4f, test: %.4f' % (Brier_val, Brier_test))
+                    else:
+                        Brier_test1 = self.common_get_brier(truth['test1'], metric_res['test1'])
+                        Brier_test2 = self.common_get_brier(truth['test2'], metric_res['test2'])
+                        Brier_test3 = self.common_get_brier(truth['test3'], metric_res['test3'])
+                        print('Brier: val: %.4f, test1: %.4f, test2: %.4f, test3: %.4f' % (
+                            Brier_val, Brier_test1, Brier_test2, Brier_test3
+                        ))
+
                 else:
                     # average uncertainty
                     mU_val = np.mean(metric_res['val'][0])
-                    mU_test = np.mean(metric_res['test'][0])
-                    print('%s: \nmUncertainty: val: %.4f, test: %.4f' % (
-                        metric_name, mU_val, mU_test
-                    ))
+
+                    if not self.shift:
+                        mU_test = np.mean(metric_res['test'][0])
+                        print('%s: \nmUncertainty: val: %.4f, test: %.4f' % (
+                            metric_name, mU_val, mU_test
+                        ))
+                    else:
+                        mU_test1 = np.mean(metric_res['test1'][0])
+                        mU_test2 = np.mean(metric_res['test2'][0])
+                        mU_test3 = np.mean(metric_res['test3'][0])
+                        print('%s: \nmUncertainty: val: %.4f, test1: %.4f, test2: %.4f, test3: %.4f' % (
+                            metric_name, mU_val, mU_test1, mU_test2, mU_test3
+                        ))
                     # AUC
                     AUC_val = self.common_get_auc(truth['val'], metric_res['val'][0])
-                    AUC_test = self.common_get_auc(truth['test'], metric_res['test'][0])
-                    print('AUC: val: %.4f, test: %.4f' % (AUC_val, AUC_test))
+
+                    if not self.shift:
+                        AUC_test = self.common_get_auc(truth['test'], metric_res['test'][0])
+                        print('AUC: val: %.4f, test: %.4f' % (AUC_val, AUC_test))
+                    else:
+                        AUC_test1 = self.common_get_auc(truth['test1'], metric_res['test1'][0])
+                        AUC_test2 = self.common_get_auc(truth['test2'], metric_res['test2'][0])
+                        AUC_test3 = self.common_get_auc(truth['test3'], metric_res['test3'][0])
+                        print('AUC: val: %.4f, test1: %.4f, test2: %.4f, test3: %.4f' % (
+                            AUC_val, AUC_test1, AUC_test2, AUC_test3
+                        ))
+
                     # AUPR
                     AUPR_val = self.common_get_aupr(truth['val'], metric_res['val'][0])
-                    AUPR_test = self.common_get_aupr(truth['test'], metric_res['test'][0])
-                    print('AUPR: val: %.4f, test: %.4f' % (AUPR_val, AUPR_test))
+
+                    if not self.shift:
+                        AUPR_test = self.common_get_aupr(truth['test'], metric_res['test'][0])
+                        print('AUPR: val: %.4f, test: %.4f' % (AUPR_val, AUPR_test))
+                    else:
+                        AUPR_test1 = self.common_get_aupr(truth['test1'], metric_res['test1'][0])
+                        AUPR_test2 = self.common_get_aupr(truth['test2'], metric_res['test2'][0])
+                        AUPR_test3 = self.common_get_aupr(truth['test3'], metric_res['test3'][0])
+                        print('AUPR: val: %.4f, test1: %.4f, test2: %.4f, test3: %.4f' % (
+                            AUPR_val, AUPR_test1, AUPR_test2, AUPR_test3
+                        ))
+
                     # Brier score
                     Brier_val = self.common_get_brier(truth['val'], metric_res['val'][0])
-                    Brier_test = self.common_get_brier(truth['test'], metric_res['test'][0])
-                    print('Brier: val: %.4f, test: %.4f' % (Brier_val, Brier_test))
 
-                eval_res[metric_name]['mUncertain'] = {'val': mU_val, 'test': mU_test}
-                eval_res[metric_name]['AUC'] = {'val': AUC_val, 'test': AUC_test}
-                eval_res[metric_name]['AUPR'] = {'val': AUPR_val, 'test': AUPR_test}
-                eval_res[metric_name]['Brier'] = {'val': Brier_val, 'test': Brier_test}
+                    if not self.shift:
+                        Brier_test = self.common_get_brier(truth['test'], metric_res['test'][0])
+                        print('Brier: val: %.4f, test: %.4f' % (Brier_val, Brier_test))
+                    else:
+                        Brier_test1 = self.common_get_brier(truth['test1'], metric_res['test1'][0])
+                        Brier_test2 = self.common_get_brier(truth['test2'], metric_res['test2'][0])
+                        Brier_test3 = self.common_get_brier(truth['test3'], metric_res['test3'][0])
+                        print('Brier: val: %.4f, test1: %.4f, test2: %.4f, test3: %.4f' % (
+                            Brier_val, Brier_test1, Brier_test2, Brier_test3
+                        ))
+
+                if not self.shift:
+                    eval_res[metric_name]['mUncertain'] = {'val': mU_val, 'test': mU_test}
+                    eval_res[metric_name]['AUC'] = {'val': AUC_val, 'test': AUC_test}
+                    eval_res[metric_name]['AUPR'] = {'val': AUPR_val, 'test': AUPR_test}
+                    eval_res[metric_name]['Brier'] = {'val': Brier_val, 'test': Brier_test}
+                else:
+                    eval_res[metric_name]['mUncertain'] = {
+                        'val': mU_val, 'test1': mU_test1,
+                        'test2': mU_test2, 'test3': mU_test3,
+                    }
+                    eval_res[metric_name]['AUC'] = {
+                        'val': AUC_val, 'test1': AUC_test1,
+                        'test2': AUC_test2, 'test3': AUC_test3,
+                    }
+                    eval_res[metric_name]['AUPR'] = {
+                        'val': AUPR_val, 'test1': AUPR_test1,
+                        'test2': AUPR_test2, 'test3': AUPR_test3,
+                    }
+                    eval_res[metric_name]['Brier'] = {
+                        'val': Brier_val, 'test1': Brier_test1,
+                        'test2': Brier_test2, 'test3': Brier_test3,
+                    }
 
         # save evaluation res
         if not os.path.exists(os.path.join(self.save_dir, self.task)):
@@ -227,8 +324,16 @@ if __name__ == "__main__":
     #     )
     #     eval_m.evaluation()
 
+    # eval_m = Uncertainty_Eval(
+    #     res_dir='Uncertainty_Results/different_project', projects='java_project3', 
+    #     save_dir='Uncertainty_Eval/different_project/java_project3', task='CodeCompletion_Module'
+    # )
+    # eval_m.evaluation()
+
     eval_m = Uncertainty_Eval(
-        res_dir='Uncertainty_Results/different_project', projects='java_project3', 
-        save_dir='Uncertainty_Eval/different_project/java_project3', task='CodeCompletion_Module'
+        res_dir='Uncertainty_Results/different_author', projects='elasticsearch', 
+        save_dir='Uncertainty_Eval/different_author/elasticsearch', 
+        task='CodeSummary_Module',
+        shift=True
     )
     eval_m.evaluation()

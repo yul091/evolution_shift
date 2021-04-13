@@ -19,17 +19,32 @@ class CodeCompletion_Module(BasicModule):
             train_batch_size, test_batch_size, max_size, load_poor
         )
 
-        self.train_loader, self.val_loader, self.test_loader = self.load_data()
+        if self.test_path is not None:
+            self.train_loader, self.val_loader, self.test_loader = self.load_data()
+        else:
+            self.train_loader, self.val_loader, self.test_loader1, \
+                self.test_loader2, self.test_loader3 = self.load_data()
         self.get_information()
-        self.test_acc = common_cal_accuracy(self.test_pred_y, self.test_y)
-        self.val_acc = common_cal_accuracy(self.val_pred_y, self.val_y)
         self.train_acc = common_cal_accuracy(self.train_pred_y, self.train_y)
-        self.save_truth()
-        print(
-            'construct the module', self.__class__.__name__, 
-            'train acc %0.4f, val acc %0.4f, test acc %0.4f' % (
-                self.train_acc, self.val_acc, self.test_acc)
-        )
+        self.val_acc = common_cal_accuracy(self.val_pred_y, self.val_y)
+        if self.test_path is not None:
+            self.test_acc = common_cal_accuracy(self.test_pred_y, self.test_y)
+            self.save_truth()
+            print(
+                'construct the module', self.__class__.__name__, 
+                'train acc %0.4f, val acc %0.4f, test acc %0.4f' % (
+                    self.train_acc, self.val_acc, self.test_acc)
+            )
+        else:
+            self.test_acc1 = common_cal_accuracy(self.test_pred_y1, self.test_y1)
+            self.test_acc2 = common_cal_accuracy(self.test_pred_y2, self.test_y2)
+            self.test_acc3 = common_cal_accuracy(self.test_pred_y3, self.test_y3)
+            self.save_truth()
+            print(
+                'construct the module {}: '.format(self.__class__.__name__), 
+                'train acc %0.4f, val acc %0.4f, test1 acc %0.4f, test2 acc %0.4f, test3 acc %0.4f' % (
+                    self.train_acc, self.val_acc, self.test_acc1, self.test_acc2, self.test_acc3)
+            )
 
 
     def load_model(self):
@@ -54,14 +69,30 @@ class CodeCompletion_Module(BasicModule):
         val_loader = Word2vecLoader(self.val_path, d_word_index, 
                                     batch_size=self.train_batch_size,
                                     max_size=self.max_size)
-        test_loader = Word2vecLoader(self.test_path, d_word_index, 
-                                     batch_size=self.train_batch_size,
-                                     max_size=self.max_size)
-        
-        print('train loader size: {}, val loader size: {}, test loader size: {}'.format(
-            len(train_loader), len(val_loader), len(test_loader)
-        ))
+        if self.test_path is not None: # only one test set
+            test_loader = Word2vecLoader(self.test_path, d_word_index, 
+                                         batch_size=self.train_batch_size,
+                                         max_size=self.max_size)
+            
+            print('train loader size: {}, val loader size: {}, test loader size: {}'.format(
+                len(train_loader), len(val_loader), len(test_loader)
+            ))
 
-        return train_loader, val_loader, test_loader
+            return train_loader, val_loader, test_loader
+        else:
+            test_loader1 = Word2vecLoader(self.test_path1, d_word_index, 
+                                          batch_size=self.train_batch_size,
+                                          max_size=self.max_size)
+            test_loader2 = Word2vecLoader(self.test_path2, d_word_index, 
+                                          batch_size=self.train_batch_size,
+                                          max_size=self.max_size)
+            test_loader3 = Word2vecLoader(self.test_path3, d_word_index, 
+                                          batch_size=self.train_batch_size,
+                                          max_size=self.max_size)
+            print('train loader size: {}, val loader size: {}, test loader1 size: {}, test loader2 size: {}, test loader3 size: {}'.format(
+                len(train_loader), len(val_loader), len(test_loader1), len(test_loader2), len(test_loader3)
+            ))
+
+            return train_loader, val_loader, test_loader1, test_loader2, test_loader3
 
 

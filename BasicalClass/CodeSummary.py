@@ -19,17 +19,33 @@ class CodeSummary_Module(BasicModule):
             train_batch_size, test_batch_size, max_size, load_poor
         )
 
-        self.train_loader, self.val_loader, self.test_loader = self.load_data()
+        if self.test_path is not None: # only on test test
+            self.train_loader, self.val_loader, self.test_loader = self.load_data()
+        else:
+            self.train_loader, self.val_loader, self.test_loader1, \
+                self.test_loader2, self.test_loader3 = self.load_data()
+
         self.get_information()
-        self.test_acc = common_cal_accuracy(self.test_pred_y, self.test_y)
-        self.val_acc = common_cal_accuracy(self.val_pred_y, self.val_y)
         self.train_acc = common_cal_accuracy(self.train_pred_y, self.train_y)
-        self.save_truth()
-        print(
-            'construct the module {}: '.format(self.__class__.__name__), 
-            'train acc %0.4f, val acc %0.4f, test acc %0.4f' % (
-                self.train_acc, self.val_acc, self.test_acc)
-        )
+        self.val_acc = common_cal_accuracy(self.val_pred_y, self.val_y)
+        if self.test_path is not None:
+            self.test_acc = common_cal_accuracy(self.test_pred_y, self.test_y)
+            self.save_truth()
+            print(
+                'construct the module {}: '.format(self.__class__.__name__), 
+                'train acc %0.4f, val acc %0.4f, test acc %0.4f' % (
+                    self.train_acc, self.val_acc, self.test_acc)
+            )
+        else:
+            self.test_acc1 = common_cal_accuracy(self.test_pred_y1, self.test_y1)
+            self.test_acc2 = common_cal_accuracy(self.test_pred_y2, self.test_y2)
+            self.test_acc3 = common_cal_accuracy(self.test_pred_y3, self.test_y3)
+            self.save_truth()
+            print(
+                'construct the module {}: '.format(self.__class__.__name__), 
+                'train acc %0.4f, val acc %0.4f, test1 acc %0.4f, test2 acc %0.4f, test3 acc %0.4f' % (
+                    self.train_acc, self.val_acc, self.test_acc1, self.test_acc2, self.test_acc3)
+            )
 
 
     def load_model(self):
@@ -50,15 +66,8 @@ class CodeSummary_Module(BasicModule):
         token2index, path2index, func2index, embed, tk2num = perpare_train(
             self.tk_path, self.embed_type, self.vec_path, self.embed_dim, self.res_dir
         )
-        # print('train path: {}'.format(self.train_path))
         train_db = CodeLoader(self.train_path, self.max_size, token2index, tk2num)
         val_db = CodeLoader(self.val_path, self.max_size, token2index, tk2num)
-        test_db = CodeLoader(self.test_path, self.max_size, token2index, tk2num)
-    
-        print('train data length: {}, val data length: {}, test data length: {}'.format(
-            len(train_db), len(val_db), len(test_db)
-        ))
-
         train_loader = DataLoader(
             train_db, batch_size=self.train_batch_size, 
             collate_fn=my_collate, shuffle=False
@@ -67,17 +76,45 @@ class CodeSummary_Module(BasicModule):
             val_db, batch_size=self.test_batch_size, 
             collate_fn=my_collate, shuffle=False
         )
-        test_loader = DataLoader(
-            test_db, batch_size=self.test_batch_size, 
-            collate_fn=my_collate, shuffle=False
-        )
+
+        if self.test_path is not None:
+            test_db = CodeLoader(self.test_path, self.max_size, token2index, tk2num)
+            print('train data length: {}, val data length: {}, test data length: {}'.format(
+                len(train_db), len(val_db), len(test_db)
+            ))
+            test_loader = DataLoader(
+                test_db, batch_size=self.test_batch_size, 
+                collate_fn=my_collate, shuffle=False
+            )
+            print('train loader size: {}, val loader size: {}, test loader size: {}'.format(
+                len(train_loader), len(val_loader), len(test_loader)
+            ))
+            return train_loader, val_loader, test_loader
+
+        else:
+            test_db1 = CodeLoader(self.test_path1, self.max_size, token2index, tk2num)
+            test_db2 = CodeLoader(self.test_path2, self.max_size, token2index, tk2num)
+            test_db3 = CodeLoader(self.test_path3, self.max_size, token2index, tk2num)
+            print('train data length: {}, val data length: {}, test data1 length: {}, test data2 length: {}, test data3 length: {}'.format(
+                len(train_db), len(val_db), len(test_db1), len(test_db2), len(test_db3)
+            ))
+            test_loader1 = DataLoader(
+                test_db1, batch_size=self.test_batch_size, 
+                collate_fn=my_collate, shuffle=False
+            )
+            test_loader2 = DataLoader(
+                test_db2, batch_size=self.test_batch_size, 
+                collate_fn=my_collate, shuffle=False
+            )
+            test_loader3 = DataLoader(
+                test_db3, batch_size=self.test_batch_size, 
+                collate_fn=my_collate, shuffle=False
+            )
+            print('train loader size: {}, val loader size: {}, test loader1 size: {}, test loader2 size: {}, test loader3 size: {}'.format(
+                len(train_loader), len(val_loader), len(test_loader1), len(test_loader2), len(test_loader3)
+            ))
+            return train_loader, val_loader, test_loader1, test_loader2, test_loader3
         
-        print('train loader size: {}, val loader size: {}, test loader size: {}'.format(
-            len(train_loader), len(val_loader), len(test_loader)
-        ))
-
-        return train_loader, val_loader, test_loader
-
 
 if __name__ == '__main__':
     CodeSummary_Module(DEVICE)
