@@ -114,15 +114,35 @@ if __name__ == '__main__':
     #         dest_file = origin_file.rstrip('.txt') + '.tsv'
     #         create_tsv_file(origin_file, dest_file)
 
-    project = 'elasticsearch'
-    data_dir = 'java_data/different_author/' + project + '/data'
+    # project = 'elasticsearch'
+    # data_dir = 'java_data/different_author/' + project + '/data'
+    # data_type = ['train', 'val', 'test1', 'test2', 'test3']
+    # java_dict = {
+    #     k + '.txt': os.path.join(data_dir, k) # 'train': data_dir/train/
+    #     for k in data_type
+    # }
+
+    # dest_dir = "program_tasks/code_completion/dataset/different_author/" + project
+
+    # if not os.path.exists(dest_dir):
+    #     os.makedirs(dest_dir)
+
+    # for name, src in java_dict.items():
+    #     parse_java(src, dest_dir, name)
+
+    # for name in java_dict:
+    #     origin_file = os.path.join(dest_dir, name)
+    #     dest_file = origin_file.rstrip('.txt') + '.tsv'
+    #     create_tsv_file(origin_file, dest_file)
+
+    data_dir = 'java_data/different_time/data'
     data_type = ['train', 'val', 'test1', 'test2', 'test3']
     java_dict = {
         k + '.txt': os.path.join(data_dir, k) # 'train': data_dir/train/
         for k in data_type
     }
 
-    dest_dir = "program_tasks/code_completion/dataset/different_author/" + project
+    dest_dir = "program_tasks/code_completion/dataset/different_time/java_project"
 
     if not os.path.exists(dest_dir):
         os.makedirs(dest_dir)

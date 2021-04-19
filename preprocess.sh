@@ -19,7 +19,8 @@
 #   step and set this value to the number of cores.
 # PYTHON - python3 interpreter alias.
 # DIR=java_data/different_project/data
-DIR=java_data/different_author/elasticsearch/data
+# DIR=java_data/different_author/elasticsearch/data
+DIR=java_data/different_time/data
 TRAIN_DIR=$DIR/train
 VAL_DIR=$DIR/val
 # TEST_DIR=$DIR/gradle/val
@@ -27,8 +28,9 @@ TEST_DIR1=$DIR/test1
 TEST_DIR2=$DIR/test2
 TEST_DIR3=$DIR/test3
 # DATASET_NAME=java_project3
-DATASET_NAME=elasticsearch
-TRG_DIR=java_data/different_author/$DATASET_NAME
+DATASET_NAME=java_project
+# TRG_DIR=java_data/different_author/$DATASET_NAME
+TRG_DIR=java_data/different_time/$DATASET_NAME
 
 ### Check if a directory exists ###
 if [ -d $TRG_DIR ] 

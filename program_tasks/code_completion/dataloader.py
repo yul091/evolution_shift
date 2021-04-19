@@ -121,7 +121,7 @@ class TextClassDataLoader(object):
 
 class Word2vecLoader(object):
 
-    def __init__(self, path_file, word_to_index, batch_size=32, max_size=None):
+    def __init__(self, path_file, word_to_index, batch_size=64, max_size=None):
 
         self.batch_size = batch_size
         self.word_to_index = word_to_index
@@ -183,7 +183,9 @@ class Word2vecLoader(object):
         return self.n_batches
 
     def __iter__(self):
-        self._shuffle_indices()
+        # self._shuffle_indices()
+        self.index = 0
+        self.batch_index = 0 # do not shuffle for each enumeration
         for i in range(self.n_batches):
             if self.batch_index == self.n_batches:
                 raise StopIteration()

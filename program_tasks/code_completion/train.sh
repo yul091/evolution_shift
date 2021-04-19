@@ -1,6 +1,7 @@
 #!/bin/bash
 # PROJECT=different_project/java_project3
-PROJECT=different_author/elasticsearch
+# PROJECT=different_author/elasticsearch
+PROJECT=different_time/java_project
 RES_DIR=program_tasks/code_completion/result/$PROJECT
 
 if [ ! -d $RES_DIR ]; then

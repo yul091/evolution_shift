@@ -85,7 +85,7 @@ def train(train_loader, model, criterion, optimizer):
 
 
 def test(val_loader, model, criterion, val_name):
-    losses = AverageMeter()
+    # losses = AverageMeter()
     top1 = AverageMeter()
 
     # switch to evaluate mode
@@ -93,14 +93,12 @@ def test(val_loader, model, criterion, val_name):
     for i, (input, target, _) in enumerate(val_loader):
         input = input.cuda()
         target = target.cuda()
-
         # compute output
         output = model(input)
-        loss = criterion(output, target)
-
+        # loss = criterion(output, target)
         # measure accuracy and record loss
         prec1 = accuracy(output.data, target, topk=(1,))
-        losses.update(loss.data, input.size(0))
+        # losses.update(loss.data, input.size(0))
         top1.update(prec1[0][0], input.size(0))
 
     res = {f'{val_name} acc': top1.avg.item()}

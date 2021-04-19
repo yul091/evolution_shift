@@ -326,7 +326,10 @@ if __name__ == "__main__":
 
     # eval_m = Uncertainty_Eval(
     #     res_dir='Uncertainty_Results/different_project', projects='java_project3', 
-    #     save_dir='Uncertainty_Eval/different_project/java_project3', task='CodeCompletion_Module'
+    #     save_dir='Uncertainty_Eval/different_project/java_project3', 
+    #     # task='CodeCompletion_Module',
+    #     task='CodeSummary_Module',
+
     # )
     # eval_m.evaluation()
 
@@ -334,6 +337,16 @@ if __name__ == "__main__":
         res_dir='Uncertainty_Results/different_author', projects='elasticsearch', 
         save_dir='Uncertainty_Eval/different_author/elasticsearch', 
         task='CodeSummary_Module',
+        # task='CodeCompletion_Module',
         shift=True
     )
     eval_m.evaluation()
+
+    # eval_m = Uncertainty_Eval(
+    #     res_dir='Uncertainty_Results/different_time', projects='java_project', 
+    #     save_dir='Uncertainty_Eval/different_time/java_project', 
+    #     # task='CodeSummary_Module',
+    #     task='CodeCompletion_Module',
+    #     shift=True
+    # )
+    # eval_m.evaluation()

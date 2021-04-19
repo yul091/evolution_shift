@@ -130,6 +130,9 @@ def test_model(val_loader, model, device, index2func, val_name):
         fp += fp_add
         fn += fn_add
         acc += acc_add
+    
+    if total_samples == 0:
+        return {f'{val_name} acc': 0}
     acc = acc / total_samples
     prec = tp / (tp + fp + 1e-8)
     recall = tp / (tp + fn + 1e-8)

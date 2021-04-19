@@ -1,7 +1,8 @@
 #!/bin/bash
 # PROJECT=different_project/java_project3
-PROJECT=different_author/elasticsearch
-RES_DIR=program_tasks/code_summary/result/$PROJECT
+# PROJECT=different_author/elasticsearch
+PROJECT=different_time
+RES_DIR=program_tasks/code_summary/result/$PROJECT/java_project
 
 if [ ! -d $RES_DIR ]; then
   mkdir $RES_DIR

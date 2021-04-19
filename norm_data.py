@@ -76,12 +76,15 @@ def main(DATA_DIR, DIR):
 
 if __name__ == '__main__':
     file_dict = {
-        'elasticsearch': 'java_pkl',
+        # 'elasticsearch': 'java_pkl',
+        # 'java_project1': 'java_pkl1',
         # 'java_project2': 'java_pkl2',
         # 'java_project3': 'java_pkl3',
+        'java_project': 'java_pkl'
     }
     for FILENAME, GEN_FILE in file_dict.items():
-        TRG_DIR = 'java_data/different_author/elasticsearch'
+        # TRG_DIR = 'java_data/different_author/elasticsearch'
+        TRG_DIR = 'java_data/different_time'
         DIR = os.path.join(TRG_DIR, GEN_FILE)
         DATA_DIR = os.path.join(TRG_DIR, FILENAME)
         main(DATA_DIR, DIR)

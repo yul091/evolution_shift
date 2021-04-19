@@ -116,13 +116,23 @@ if __name__ == "__main__":
     # )
     # eval_m.evaluate()
 
+    # eval_m = OODdetect(
+    #     res_dir='Uncertainty_Results/different_author', 
+    #     projects='elasticsearch', 
+    #     save_dir='Uncertainty_Eval/different_author/elasticsearch', 
+    #     # task='CodeSummary_Module',
+    #     task='CodeCompletion_Module',
+    #     shift=True,
+    # )
+    # eval_m.evaluate()
+
     eval_m = OODdetect(
-        res_dir='Uncertainty_Results/different_author', 
-        projects='elasticsearch', 
-        save_dir='Uncertainty_Eval/different_author/elasticsearch', 
+        res_dir='Uncertainty_Results/different_time', 
+        projects='java_project', 
+        save_dir='Uncertainty_Eval/different_time/java_project', 
         task='CodeSummary_Module',
         # task='CodeCompletion_Module',
-        shift=True,
+        shift=True
     )
     eval_m.evaluate()
         
